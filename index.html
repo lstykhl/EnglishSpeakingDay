@@ -296,7 +296,7 @@
 </div>
 
 <script>
-  // 替換為你的 GAS Web App 部署網址
+  // 已更新為你的指定 GAS API URL
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw8aryp3-LxbJmqSjqRod2yPHyZBCkL1UKfsq_I2ctJcnOXlOYjpYK8IzJAcpd645mi/exec";
 
   let html5QrcodeScanner = null;
@@ -306,7 +306,6 @@
   const beepSuccess = new Audio('https://actions.google.com/sounds/v1/ui/probes_tone.ogg');
   const beepError = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
 
-  // 跨網域 JSON/GET 請求（自動跟隨 HTTP 302 重定向）
   async function apiGet(action, params = {}) {
     params.action = action;
     params.email = userEmail;
@@ -315,7 +314,6 @@
     return await res.json();
   }
 
-  // 跨網域 POST 請求
   async function apiPost(action, body = {}) {
     body.action = action;
     body.userEmail = userEmail;
