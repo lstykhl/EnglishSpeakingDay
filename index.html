@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Speaking Day - Leaderboard & Scoring</title>
+  
+  <!-- Fonts: Host Grotesk & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- HTML5 QR Code Reader Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bhGround: '#f4f3ed',
+            bhInk: '#0a0a0a',
+            bhRed: '#d92323',
+            bhBlue: '#1d4ed8',
+            bhYellow: '#facc15',
+            bhQuiet: '#e2e0d5',
+            bhHouseRed: '#dc2626',
+            bhHousePurple: '#7e22ce',
+            bhHouseYellow: '#d97706',
+            bhHouseGreen: '#059669'
+          },
+          fontFamily: {
+            sans: ['"Host Grotesk"', 'sans-serif'],
+            mono: ['"Space Grotesk"', 'monospace']
+          },
+          borderWidth: {
+            '3': '3px',
+            '4': '4px',
+            '5': '5px',
+            '6': '6px'
+          },
+          boxShadow: {
+            'hard': '4px 4px 0px #000000',
+            'hard-lg': '6px 6px 0px #000000',
+            'hard-sm': '2px 2px 0px #000000',
+            'hard-red': '4px 4px 0px #d92323',
+            'hard-yellow': '4px 4px 0px #facc15'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f4f3ed;
+      color: #0a0a0a;
+      font-family: "Host Grotesk", sans-serif;
+    }
+    
+    /* Hard Bauhaus Grid borders */
+    .bh-seam {
+      border: 4px solid #000000;
+    }
+
+    .bh-seam-bottom {
+      border-bottom: 4px solid #000000;
+    }
+
+    .bh-seam-right {
+      border-right: 4px solid #000000;
+    }
+
+    /* HTML5 QR Code Video override */
+    #reader video {
+      object-fit: cover !important;
+      border: 3px solid #000 !important;
+    }
+
+    /* Smooth focus rings */
+    *:focus-visible {
+      outline: 4px solid #1d4ed8 !important;
+      outline-offset: 2px !important;
+    }
+
+    /* Hard button active animation */
+    .btn-hard:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000 !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-bhGround border-t-8 border-bhInk">
+
+  <!-- TOP HEADER / NAV BAR -->
+  <header class="bg-bhGround bh-seam-bottom sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-bhRed border-3 border-bhInk flex items-center justify-center font-black text-white text-xl shadow-hard-sm">
+          E
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none text-bhInk">
+            English Speaking Day
+          </h1>
+          <p class="text-xs font-bold uppercase tracking-wider text-bhInk/70 mt-0.5">
+            Live Scoring & Ranking System
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation & User Info -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- User Status Tag -->
+        <div class="bg-white border-3 border-bhInk px-3 py-1.5 flex items-center space-x-2 shadow-hard-sm text-xs font-bold">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-bhInk"></span>
+          <span id="userEmailSpan" class="font-mono text-bhInk">Loading User...</span>
+          <span id="teacherBadge" class="hidden bg-bhYellow text-bhInk text-[10px] uppercase font-extrabold px-1.5 py-0.5 border border-bhInk">
+            TEACHER
+          </span>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex border-3 border-bhInk bg-bhInk p-0.5 gap-0.5">
+          <button id="navDashboardBtn" onclick="switchTab('dashboard')" 
+            class="px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm">
+            <i class="fa-solid fa-trophy mr-1.5"></i>Leaderboard
+          </button>
+          <button id="navScannerBtn" onclick="switchTab('scanner')" 
+            class="px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition">
+            <i class="fa-solid fa-barcode mr-1.5"></i>Scanner Panel
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+
+    <!-- ================= DASHBOARD TAB ================= -->
+    <section id="dashboardSection" class="space-y-8">
+
+      <!-- FILTER & REFRESH HEADER PLANE -->
+      <div class="bg-white bh-seam p-5 shadow-hard flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div>
+          <div class="inline-block bg-bhRed text-white text-[10px] font-black uppercase px-2 py-0.5 border border-bhInk mb-1">
+            Time Filter Range
+          </div>
+          <h2 class="text-2xl font-black uppercase tracking-tight text-bhInk">
+            Performance Leaderboards
+          </h2>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="flex flex-wrap items-center gap-2 text-xs font-bold w-full lg:w-auto">
+          <!-- Quick Presets -->
+          <div class="flex border-2 border-bhInk bg-bhGround p-1 gap-1">
+            <button id="presetAllBtn" onclick="setDatePreset('all')" class="px-3 py-1.5 font-black uppercase bg-bhBlue text-white border border-bhInk">
+              All Time
+            </button>
+            <button id="presetTodayBtn" onclick="setDatePreset('today')" class="px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk">
+              Today
+            </button>
+          </div>
+
+          <!-- Date Inputs -->
+          <div class="flex items-center gap-1 bg-bhGround border-2 border-bhInk p-1">
+            <input type="date" id="startDate" onchange="applyDateFilter()" class="bg-white border border-bhInk px-2 py-1 text-xs font-mono font-bold focus:bg-bhYellow">
+            <span class="font-black text-bhInk">&rarr;</span>
+            <input type="date" id="endDate" onchange="applyDateFilter()" class="bg-white border border-bhInk px-2 py-1 text-xs font-mono font-bold focus:bg-bhYellow">
+          </div>
+
+          <!-- Live Refresh Switcher -->
+          <button id="liveRefreshBtn" onclick="toggleLiveRefresh()" class="btn-hard px-3 py-2 bg-bhGround hover:bg-white text-bhInk border-2 border-bhInk font-black uppercase flex items-center space-x-1.5 shadow-hard-sm">
+            <span id="liveDot" class="w-2.5 h-2.5 rounded-full bg-slate-400 border border-bhInk"></span>
+            <span id="liveText">Live Auto-Refresh: Off</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- HOUSE RANKING (HERO COMPONENT - 4 COLUMNS / 4 PLANES) -->
+      <div>
+        <div class="flex items-center space-x-2 mb-3">
+          <div class="w-4 h-4 bg-bhYellow border-2 border-bhInk"></div>
+          <h3 class="text-lg font-black uppercase tracking-tight text-bhInk">
+            House Championship Standing
+          </h3>
+        </div>
+
+        <!-- 4 House Cards -->
+        <div id="houseContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Dynamically Rendered -->
+        </div>
+      </div>
+
+      <!-- MAIN RANKINGS GRID (3 COLUMNS) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- COLUMN 1: STAR STUDENT SPEAKERS (TOP 10) -->
+        <div class="bg-white bh-seam p-5 shadow-hard flex flex-col">
+          <div class="flex items-center justify-between pb-3 mb-4 border-b-4 border-bhInk">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 bg-bhRed border-2 border-bhInk text-white flex items-center justify-center font-black text-xs">10</span>
+              <h3 class="font-black text-base uppercase text-bhInk">Star Student Speakers</h3>
+            </div>
+            <span class="text-[10px] font-black uppercase bg-bhYellow px-2 py-0.5 border border-bhInk">Top 10</span>
+          </div>
+
+          <!-- Student List -->
+          <div id="studentList" class="space-y-2.5 flex-1">
+            <!-- Dynamically Rendered -->
+          </div>
+        </div>
+
+        <!-- COLUMN 2: TOP ENGLISH SPEAKING GROUPS (TOP 5) -->
+        <div class="bg-white bh-seam p-5 shadow-hard flex flex-col">
+          <div class="flex items-center justify-between pb-3 mb-4 border-b-4 border-bhInk">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 bg-bhBlue border-2 border-bhInk text-white flex items-center justify-center font-black text-xs">5</span>
+              <h3 class="font-black text-base uppercase text-bhInk">Top English Groups</h3>
+            </div>
+            <span class="text-[10px] font-black uppercase bg-bhBlue text-white px-2 py-0.5 border border-bhInk">Top 5</span>
+          </div>
+
+          <!-- Group List -->
+          <div id="groupList" class="space-y-2.5 flex-1">
+            <!-- Dynamically Rendered -->
+          </div>
+        </div>
+
+        <!-- COLUMN 3: OUTSTANDING SPEAKING CLASSES (TOP 5) -->
+        <div class="bg-white bh-seam p-5 shadow-hard flex flex-col">
+          <div class="flex items-center justify-between pb-3 mb-4 border-b-4 border-bhInk">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 bg-bhYellow border-2 border-bhInk text-bhInk flex items-center justify-center font-black text-xs">5</span>
+              <h3 class="font-black text-base uppercase text-bhInk">Outstanding Classes</h3>
+            </div>
+            <span class="text-[10px] font-black uppercase bg-bhQuiet text-bhInk px-2 py-0.5 border border-bhInk">Top 5</span>
+          </div>
+
+          <!-- Class List -->
+          <div id="classList" class="space-y-2.5 flex-1">
+            <!-- Dynamically Rendered -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= SCANNER & TEACHER TAB ================= -->
+    <section id="scannerSection" class="hidden space-y-8 max-w-4xl mx-auto">
+
+      <!-- UNAUTHORIZED ALERT BLOCK -->
+      <div id="unauthorizedBox" class="bg-bhRed text-white bh-seam p-8 shadow-hard text-center space-y-4">
+        <div class="w-16 h-16 bg-white text-bhRed border-4 border-bhInk mx-auto flex items-center justify-center text-3xl font-black">
+          !
+        </div>
+        <h2 class="text-2xl font-black uppercase tracking-tight">Access Restricted to Teachers</h2>
+        <p class="text-sm font-bold max-w-md mx-auto leading-relaxed">
+          Your account (<span class="font-mono underline" id="unauthEmail"></span>) is not registered in the Teachers authorization list. Only verified teachers can record student scores.
+        </p>
+      </div>
+
+      <!-- AUTHORIZED TEACHER SCANNING PANEL -->
+      <div id="authorizedBox" class="space-y-6">
+
+        <!-- Split Planes: Red Action Header + Scanner Body -->
+        <div class="bg-white bh-seam shadow-hard">
+          <!-- Red Header Plane -->
+          <div class="bg-bhRed text-white p-4 border-b-4 border-bhInk flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-black uppercase tracking-tight flex items-center">
+                <i class="fa-solid fa-camera mr-2 text-bhYellow"></i>Barcode Student Scanner
+              </h2>
+              <p class="text-xs font-bold text-white/90">Point camera at Student ID barcode to add score instantly</p>
+            </div>
+
+            <!-- Start/Stop Camera Large Action Button -->
+            <button id="toggleCameraBtn" onclick="toggleCamera()" 
+              class="btn-hard px-5 py-2.5 bg-bhYellow hover:bg-white text-bhInk border-3 border-bhInk font-black text-xs uppercase tracking-wider shadow-hard-sm transition">
+              <i class="fa-solid fa-video mr-1.5"></i>Start Camera
+            </button>
+          </div>
+
+          <!-- Video Camera Container -->
+          <div class="p-4 bg-bhGround relative min-h-[280px] flex items-center justify-center border-b-4 border-bhInk">
+            <div id="reader" class="w-full max-w-md"></div>
+            
+            <div id="cameraPlaceholder" class="flex flex-col items-center justify-center text-bhInk p-8 text-center space-y-3">
+              <div class="w-20 h-20 bg-white border-4 border-bhInk flex items-center justify-center text-3xl shadow-hard-sm">
+                <i class="fa-solid fa-barcode text-bhInk"></i>
+              </div>
+              <p class="text-xs font-black uppercase tracking-wide max-w-xs">
+                Camera scanner is inactive. Click "Start Camera" above or type Student ID manually below.
+              </p>
+            </div>
+          </div>
+
+          <!-- Manual ID Input Footer Plane -->
+          <div class="p-5 bg-white">
+            <h3 class="text-sm font-black uppercase text-bhInk mb-1 flex items-center">
+              <i class="fa-solid fa-keyboard mr-2 text-bhBlue"></i>Manual Student ID Input
+            </h3>
+            <p class="text-xs font-bold text-bhInk/70 mb-3">
+              If the student card barcode fails or is missing, enter the 6-digit Student ID.
+            </p>
+
+            <form onsubmit="handleManualSubmit(event)" class="flex flex-col sm:flex-row gap-2">
+              <input type="text" id="manualIdInput" placeholder="Enter ID e.g. 221036" 
+                class="flex-1 bg-bhGround border-3 border-bhInk px-4 py-2.5 text-bhInk font-mono font-bold text-sm focus:bg-bhYellow focus:outline-none placeholder-bhInk/40">
+              <button type="submit" id="manualSubmitBtn" 
+                class="btn-hard bg-bhBlue hover:bg-bhInk text-white font-black px-6 py-2.5 border-3 border-bhInk text-xs uppercase tracking-wider shadow-hard-sm">
+                <i class="fa-solid fa-plus-circle mr-1.5"></i>Add +1 Point
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- SCORING FEEDBACK POPUP CARD -->
+        <div id="feedbackCard" class="hidden bg-white bh-seam p-5 shadow-hard transition-all duration-200">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-4">
+              <!-- Hard Shape Icon -->
+              <div id="feedbackIconBg" class="w-14 h-14 border-3 border-bhInk flex items-center justify-center text-2xl font-black shadow-hard-sm">
+                <i id="feedbackIcon" class="fa-solid fa-check"></i>
+              </div>
+              <div>
+                <h4 id="feedbackTitle" class="font-black text-lg uppercase tracking-tight text-bhInk">Score Added!</h4>
+                <p id="feedbackSubtitle" class="text-xs font-bold text-bhInk/70">Student updated successfully.</p>
+              </div>
+            </div>
+            <span id="feedbackTime" class="text-[10px] font-mono font-bold uppercase bg-bhQuiet px-2 py-1 border border-bhInk">Just now</span>
+          </div>
+
+          <!-- Student Profile Detail Ledger -->
+          <div id="studentDetailBox" class="mt-4 pt-4 border-t-4 border-bhInk grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="bg-bhGround p-2.5 border-2 border-bhInk">
+              <span class="text-[10px] font-black uppercase text-bhInk/60 block">Student Name</span>
+              <span id="resStudentName" class="font-black text-bhInk text-sm">--</span>
+            </div>
+            <div class="bg-bhGround p-2.5 border-2 border-bhInk">
+              <span class="text-[10px] font-black uppercase text-bhInk/60 block">Class / Group</span>
+              <span id="resStudentClass" class="font-bold text-bhInk">--</span>
+            </div>
+            <div class="bg-bhGround p-2.5 border-2 border-bhInk">
+              <span class="text-[10px] font-black uppercase text-bhInk/60 block">House Affiliation</span>
+              <span id="resStudentHouse" class="font-bold text-bhInk">--</span>
+            </div>
+            <div class="bg-bhYellow p-2.5 border-2 border-bhInk">
+              <span class="text-[10px] font-black uppercase text-bhInk/80 block">Updated Total</span>
+              <span id="resStudentTotal" class="font-black text-bhInk text-base">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEACHER LOOKUP PLANE (CLASS / GROUP SCORE LOOKUP) -->
+        <div class="bg-white bh-seam p-5 shadow-hard space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b-4 border-bhInk">
+            <h3 class="text-base font-black uppercase tracking-tight text-bhInk flex items-center">
+              <i class="fa-solid fa-list-check text-bhRed mr-2"></i>Class & Group Student Score Lookup
+            </h3>
+            <span class="text-[10px] bg-bhBlue text-white font-black px-2 py-0.5 border border-bhInk uppercase">Teacher Exclusive</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Filter Type -->
+            <div>
+              <label class="block text-[10px] font-black uppercase text-bhInk mb-1">Lookup Category</label>
+              <select id="tFilterType" onchange="onTeacherFilterTypeChange()" class="w-full bg-bhGround border-3 border-bhInk px-3 py-2 text-xs font-bold text-bhInk focus:bg-bhYellow">
+                <option value="class">Filter by Class</option>
+                <option value="group">Filter by English Group</option>
+              </select>
+            </div>
+
+            <!-- Target Selection -->
+            <div>
+              <label class="block text-[10px] font-black uppercase text-bhInk mb-1">Select Target</label>
+              <select id="tFilterValue" class="w-full bg-bhGround border-3 border-bhInk px-3 py-2 text-xs font-bold text-bhInk focus:bg-bhYellow">
+                <option value="">Select Category...</option>
+              </select>
+            </div>
+
+            <!-- Submit Lookup -->
+            <div class="flex items-end">
+              <button onclick="fetchTeacherStudentScores()" class="btn-hard w-full bg-bhYellow hover:bg-bhInk hover:text-white text-bhInk font-black px-4 py-2 border-3 border-bhInk text-xs uppercase shadow-hard-sm">
+                Search Roster Scores
+              </button>
+            </div>
+          </div>
+
+          <!-- Date Filters for Lookup -->
+          <div class="flex flex-wrap items-center gap-2 text-xs font-bold bg-bhGround p-3 border-2 border-bhInk">
+            <span class="text-bhInk uppercase text-[10px]">Filter Date:</span>
+            <input type="date" id="tStartDate" class="bg-white border border-bhInk px-2 py-1 text-xs font-mono font-bold">
+            <span class="text-bhInk">&rarr;</span>
+            <input type="date" id="tEndDate" class="bg-white border border-bhInk px-2 py-1 text-xs font-mono font-bold">
+          </div>
+
+          <!-- Lookup Table Output -->
+          <div id="teacherLookupResult" class="space-y-2 max-h-64 overflow-y-auto pt-2">
+            <p class="text-xs font-bold text-bhInk/60 text-center py-6 border-2 border-dashed border-bhInk/30">
+              Select a class or English group to view roster score tallies.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER BLOCK -->
+  <footer class="mt-auto border-t-8 border-bhInk bg-white py-6 text-center text-xs font-bold text-bhInk">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="w-3 h-3 bg-bhRed border border-bhInk inline-block"></span>
+        <span class="w-3 h-3 bg-bhBlue border border-bhInk inline-block"></span>
+        <span class="w-3 h-3 bg-bhYellow border border-bhInk inline-block"></span>
+        <span class="uppercase font-black">English Speaking Day Platform</span>
+      </div>
+      <p class="font-mono text-[11px]">Powered by Google Apps Script &bull; Bauhaus System Architecture</p>
+    </div>
+  </footer>
+
+  <!-- SCRIPT LOGIC & GAS INTEGRATION -->
+  <script>
+    // System State Variables & GAS API Endpoint Configuration
+    const GAS_API_URL = "https://script.google.com/a/macros/lstyoungkhl.edu.hk/s/AKfycbw8aryp3-LxbJmqSjqRod2yPHyZBCkL1UKfsq_I2ctJcnOXlOYjpYK8IzJAcpd645mi/exec";
+
+    let currentUserEmail = "";
+    let isTeacher = false;
+    let html5QrCode = null;
+    let isCameraScanning = false;
+    let lastScannedCode = "";
+    let lastScanTime = 0;
+    let filterOptions = { classes: [], groups: [] };
+    let liveRefreshTimer = null;
+    let isLiveRefreshOn = false;
+
+    // Web Audio Sound Generators
+    const playAudioSuccess = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } catch (e) { console.log('Audio error:', e); }
+    };
+
+    const playAudioWarning = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.frequency.setValueAtTime(200, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      } catch (e) { console.log('Audio error:', e); }
+    };
+
+    // On Load Initialization using Fetch
+    window.onload = () => {
+      fetch(`${GAS_API_URL}?action=getInitialData`)
+        .then(res => res.json())
+        .then(data => handleInitSuccess(data))
+        .catch(err => {
+          console.warn("API call failed, falling back to mock mode:", err);
+          handleInitSuccess({
+            userEmail: "teacher@lstyoungkhl.edu.hk",
+            isTeacher: true,
+            leaderboard: getMockLeaderboardData()
+          });
+        });
+
+      fetch(`${GAS_API_URL}?action=getFilterOptions`)
+        .then(res => res.json())
+        .then(options => handleOptionsLoaded(options))
+        .catch(err => {
+          handleOptionsLoaded({
+            classes: ['5A', '5C', '6B'],
+            groups: ['Eng 5A-1', 'Eng 5C-1', 'Eng 6B-1']
+          });
+        });
+    };
+
+    function handleInitSuccess(data) {
+      currentUserEmail = data.userEmail || "Guest User";
+      isTeacher = data.isTeacher;
+
+      document.getElementById('userEmailSpan').innerText = currentUserEmail;
+      document.getElementById('unauthEmail').innerText = currentUserEmail;
+
+      if (isTeacher) {
+        document.getElementById('teacherBadge').classList.remove('hidden');
+        document.getElementById('unauthorizedBox').classList.add('hidden');
+        document.getElementById('authorizedBox').classList.remove('hidden');
+      } else {
+        document.getElementById('unauthorizedBox').classList.remove('hidden');
+        document.getElementById('authorizedBox').classList.add('hidden');
+      }
+
+      renderLeaderboard(data.leaderboard);
+    }
+
+    function handleOptionsLoaded(options) {
+      filterOptions = options;
+      onTeacherFilterTypeChange();
+    }
+
+    function onTeacherFilterTypeChange() {
+      const type = document.getElementById('tFilterType').value;
+      const select = document.getElementById('tFilterValue');
+      select.innerHTML = '';
+
+      const list = type === 'class' ? filterOptions.classes : filterOptions.groups;
+      if (!list || list.length === 0) {
+        select.innerHTML = `<option value="">No options available</option>`;
+        return;
+      }
+
+      list.forEach(item => {
+        select.innerHTML += `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`;
+      });
+    }
+
+    function fetchTeacherStudentScores() {
+      const type = document.getElementById('tFilterType').value;
+      const val = document.getElementById('tFilterValue').value;
+      const sDate = document.getElementById('tStartDate').value;
+      const eDate = document.getElementById('tEndDate').value;
+      const resultBox = document.getElementById('teacherLookupResult');
+
+      if (!val) {
+        resultBox.innerHTML = `<p class="text-xs font-bold text-bhRed text-center py-3 border-2 border-bhRed bg-bhRed/10">Please select a filter category first.</p>`;
+        return;
+      }
+
+      resultBox.innerHTML = `<p class="text-xs font-bold text-bhInk text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading roster scores...</p>`;
+
+      fetch(`${GAS_API_URL}?action=getStudentScores&filterType=${type}&filterValue=${encodeURIComponent(val)}&startDate=${sDate}&endDate=${eDate}`)
+        .then(res => res.json())
+        .then(data => renderTeacherStudentLookup(data))
+        .catch(err => {
+          console.error(err);
+          resultBox.innerHTML = `<p class="text-xs font-bold text-bhRed text-center py-3 border-2 border-bhRed">Network error loading roster.</p>`;
+        });
+    }
+
+    function renderTeacherStudentLookup(res) {
+      const resultBox = document.getElementById('teacherLookupResult');
+      resultBox.innerHTML = '';
+
+      if (!res.success || !res.students || res.students.length === 0) {
+        resultBox.innerHTML = `<p class="text-xs font-bold text-bhInk/60 text-center py-4 border-2 border-bhInk bg-bhQuiet">No matching student records found.</p>`;
+        return;
+      }
+
+      res.students.forEach(s => {
+        resultBox.innerHTML += `
+          <div class="flex items-center justify-between p-3 bg-bhGround border-2 border-bhInk text-xs">
+            <div>
+              <span class="font-black text-bhInk text-sm">${escapeHtml(s.name)}</span>
+              <span class="text-[10px] font-bold text-bhInk/70 block">
+                Class ${s.className} (#${s.classNo || '-'}) &bull; ${s.englishGroup} &bull; ${s.house} House
+              </span>
+            </div>
+            <div class="font-mono font-black text-base bg-bhYellow px-3 py-1 border border-bhInk text-bhInk">
+              ${s.score} <span class="text-[10px] font-bold">PTS</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function switchTab(tab) {
+      const dashBtn = document.getElementById('navDashboardBtn');
+      const scanBtn = document.getElementById('navScannerBtn');
+      const dashSec = document.getElementById('dashboardSection');
+      const scanSec = document.getElementById('scannerSection');
+
+      if (tab === 'dashboard') {
+        dashBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm";
+        scanBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition";
+        dashSec.classList.remove('hidden');
+        scanSec.classList.add('hidden');
+        stopCamera();
+      } else {
+        scanBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm";
+        dashBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition";
+        scanSec.classList.remove('hidden');
+        dashSec.classList.add('hidden');
+      }
+    }
+
+    function renderLeaderboard(data) {
+      const houseContainer = document.getElementById('houseContainer');
+      houseContainer.innerHTML = '';
+      
+      const houseThemeMap = {
+        'Red': { bg: 'bg-bhHouseRed', text: 'text-white', badge: 'bg-white text-bhHouseRed' },
+        'Purple': { bg: 'bg-bhHousePurple', text: 'text-white', badge: 'bg-white text-bhHousePurple' },
+        'Yellow': { bg: 'bg-bhHouseYellow', text: 'text-white', badge: 'bg-white text-bhHouseYellow' },
+        'Green': { bg: 'bg-bhHouseGreen', text: 'text-white', badge: 'bg-white text-bhHouseGreen' }
+      };
+
+      const houses = (data.houses && data.houses.length > 0) ? data.houses : [
+        { name: 'Red', score: 0 }, { name: 'Purple', score: 0 },
+        { name: 'Yellow', score: 0 }, { name: 'Green', score: 0 }
+      ];
+
+      const maxHouseScore = Math.max(...houses.map(h => h.score), 1);
+
+      houses.forEach((h, idx) => {
+        const theme = houseThemeMap[h.name] || { bg: 'bg-bhBlue', text: 'text-white', badge: 'bg-white text-bhBlue' };
+        const percent = Math.round((h.score / maxHouseScore) * 100);
+
+        houseContainer.innerHTML += `
+          <div class="${theme.bg} ${theme.text} bh-seam p-4 shadow-hard flex flex-col justify-between relative">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-black text-xl uppercase tracking-tight">${h.name}</span>
+              <span class="text-[11px] font-mono font-black uppercase px-2 py-0.5 border border-bhInk ${theme.badge}">
+                RANK #${idx + 1}
+              </span>
+            </div>
+            <div class="text-3xl font-black font-mono my-2">
+              ${h.score} <span class="text-xs uppercase font-sans font-bold opacity-80">PTS</span>
+            </div>
+            <div class="w-full bg-bhInk p-1 border border-bhInk">
+              <div class="bg-white h-3 border border-bhInk transition-all duration-300" style="width: ${percent}%"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      const studentList = document.getElementById('studentList');
+      studentList.innerHTML = '';
+      if (!data.students || data.students.length === 0) {
+        studentList.innerHTML = `<div class="text-xs font-bold text-bhInk/50 py-8 text-center border-2 border-dashed border-bhInk/30">No student scores recorded.</div>`;
+      } else {
+        data.students.forEach((s, idx) => {
+          let badgeClass = "bg-bhQuiet text-bhInk";
+          if (idx === 0) badgeClass = "bg-bhYellow text-bhInk font-black border-2 border-bhInk";
+          else if (idx === 1) badgeClass = "bg-white text-bhInk font-black border-2 border-bhInk";
+          else if (idx === 2) badgeClass = "bg-bhRed text-white font-black border-2 border-bhInk";
+
+          studentList.innerHTML += `
+            <div class="flex items-center justify-between p-2.5 bg-bhGround border-2 border-bhInk hover:bg-white transition">
+              <div class="flex items-center space-x-3">
+                <span class="w-7 h-7 border border-bhInk flex items-center justify-center font-mono font-black text-xs ${badgeClass}">
+                  ${idx + 1}
+                </span>
+                <div>
+                  <h4 class="text-xs font-black uppercase text-bhInk">${escapeHtml(s.name)}</h4>
+                  <p class="text-[10px] font-bold text-bhInk/70">Class ${s.className} (${s.classNo || '-'}) &bull; ${s.house}</p>
+                </div>
+              </div>
+              <span class="font-mono font-black text-sm text-bhInk bg-white px-2 py-0.5 border border-bhInk">${s.score}</span>
+            </div>
+          `;
+        });
+      }
+
+      const groupList = document.getElementById('groupList');
+      groupList.innerHTML = '';
+      if (!data.groups || data.groups.length === 0) {
+        groupList.innerHTML = `<div class="text-xs font-bold text-bhInk/50 py-8 text-center border-2 border-dashed border-bhInk/30">No group scores recorded.</div>`;
+      } else {
+        data.groups.forEach((g, idx) => {
+          groupList.innerHTML += `
+            <div class="flex items-center justify-between p-3 bg-bhGround border-2 border-bhInk">
+              <div class="flex items-center space-x-3">
+                <span class="font-mono font-black text-xs bg-bhBlue text-white w-6 h-6 flex items-center justify-center border border-bhInk">#${idx + 1}</span>
+                <span class="text-xs font-black uppercase text-bhInk">${escapeHtml(g.name)}</span>
+              </div>
+              <span class="font-mono font-black text-sm text-bhBlue">${g.score} PTS</span>
+            </div>
+          `;
+        });
+      }
+
+      const classList = document.getElementById('classList');
+      classList.innerHTML = '';
+      if (!data.classes || data.classes.length === 0) {
+        classList.innerHTML = `<div class="text-xs font-bold text-bhInk/50 py-8 text-center border-2 border-dashed border-bhInk/30">No class scores recorded.</div>`;
+      } else {
+        data.classes.forEach((c, idx) => {
+          classList.innerHTML += `
+            <div class="flex items-center justify-between p-3 bg-bhGround border-2 border-bhInk">
+              <div class="flex items-center space-x-3">
+                <span class="font-mono font-black text-xs bg-bhYellow text-bhInk w-6 h-6 flex items-center justify-center border border-bhInk">#${idx + 1}</span>
+                <span class="text-xs font-black uppercase text-bhInk">Class ${escapeHtml(c.name)}</span>
+              </div>
+              <span class="font-mono font-black text-sm text-bhInk">${c.score} PTS</span>
+            </div>
+          `;
+        });
+      }
+    }
+
+    function setDatePreset(type) {
+      const allBtn = document.getElementById('presetAllBtn');
+      const todayBtn = document.getElementById('presetTodayBtn');
+      const startDateInput = document.getElementById('startDate');
+      const endDateInput = document.getElementById('endDate');
+
+      if (type === 'all') {
+        allBtn.className = "px-3 py-1.5 font-black uppercase bg-bhBlue text-white border border-bhInk";
+        todayBtn.className = "px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk";
+        startDateInput.value = "";
+        endDateInput.value = "";
+        fetchFilteredLeaderboard(null, null);
+      } else if (type === 'today') {
+        todayBtn.className = "px-3 py-1.5 font-black uppercase bg-bhBlue text-white border border-bhInk";
+        allBtn.className = "px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk";
+        const todayStr = new Date().toISOString().split('T')[0];
+        startDateInput.value = todayStr;
+        endDateInput.value = todayStr;
+        fetchFilteredLeaderboard(todayStr, todayStr);
+      }
+    }
+
+    function applyDateFilter() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      document.getElementById('presetAllBtn').className = "px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk";
+      document.getElementById('presetTodayBtn').className = "px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk";
+      fetchFilteredLeaderboard(startDate, endDate);
+    }
+
+    function fetchFilteredLeaderboard(sDate, eDate) {
+      const url = `${GAS_API_URL}?action=getLeaderboard&startDate=${sDate || ''}&endDate=${eDate || ''}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => renderLeaderboard(data))
+        .catch(err => console.error("Leaderboard fetch error:", err));
+    }
+
+    function toggleLiveRefresh() {
+      isLiveRefreshOn = !isLiveRefreshOn;
+      const dot = document.getElementById('liveDot');
+      const txt = document.getElementById('liveText');
+
+      if (isLiveRefreshOn) {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 border border-bhInk animate-pulse";
+        txt.innerText = "Live Auto-Refresh: ON (10s)";
+        liveRefreshTimer = setInterval(() => {
+          const sDate = document.getElementById('startDate').value;
+          const eDate = document.getElementById('endDate').value;
+          fetchFilteredLeaderboard(sDate, eDate);
+        }, 10000);
+      } else {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-slate-400 border border-bhInk";
+        txt.innerText = "Live Auto-Refresh: Off";
+        if (liveRefreshTimer) clearInterval(liveRefreshTimer);
+      }
+    }
+
+    function toggleCamera() {
+      if (isCameraScanning) {
+        stopCamera();
+      } else {
+        startCamera();
+      }
+    }
+
+    function startCamera() {
+      const btn = document.getElementById('toggleCameraBtn');
+      const placeholder = document.getElementById('cameraPlaceholder');
+
+      placeholder.classList.add('hidden');
+      btn.innerHTML = `<i class="fa-solid fa-stop mr-1.5"></i>Stop Camera`;
+      btn.className = "btn-hard px-5 py-2.5 bg-bhRed hover:bg-bhInk text-white border-3 border-bhInk font-black text-xs uppercase tracking-wider shadow-hard-sm transition";
+
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { 
+        fps: 15, 
+        qrbox: { width: 280, height: 160 },
+        formatsToSupport: [ 
+          Html5QrcodeSupportedFormats.CODE_128, 
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.QR_CODE
+        ]
+      };
+
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        config, 
+        onBarcodeScanned
+      ).then(() => {
+        isCameraScanning = true;
+      }).catch(err => {
+        console.error("Camera start error:", err);
+        alert("Could not access camera. Please verify device permissions.");
+        stopCamera();
+      });
+    }
+
+    function stopCamera() {
+      if (html5QrCode && isCameraScanning) {
+        html5QrCode.stop().then(() => {
+          isCameraScanning = false;
+          resetCameraUI();
+        }).catch(err => {
+          console.error("Stop camera error:", err);
+          resetCameraUI();
+        });
+      } else {
+        resetCameraUI();
+      }
+    }
+
+    function resetCameraUI() {
+      isCameraScanning = false;
+      const btn = document.getElementById('toggleCameraBtn');
+      const placeholder = document.getElementById('cameraPlaceholder');
+      if (btn) {
+        btn.innerHTML = `<i class="fa-solid fa-video mr-1.5"></i>Start Camera`;
+        btn.className = "btn-hard px-5 py-2.5 bg-bhYellow hover:bg-white text-bhInk border-3 border-bhInk font-black text-xs uppercase tracking-wider shadow-hard-sm transition";
+      }
+      if (placeholder) placeholder.classList.remove('hidden');
+    }
+
+    function onBarcodeScanned(decodedText) {
+      const now = Date.now();
+      if (decodedText === lastScannedCode && (now - lastScanTime) < 2000) {
+        return;
+      }
+      lastScannedCode = decodedText;
+      lastScanTime = now;
+
+      submitScore(decodedText);
+    }
+
+    function handleManualSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('manualIdInput');
+      const studentId = input.value.trim();
+      if (!studentId) return;
+
+      submitScore(studentId);
+      input.value = '';
+    }
+
+    function submitScore(studentId) {
+      const manualBtn = document.getElementById('manualSubmitBtn');
+      manualBtn.disabled = true;
+      manualBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i>Saving...`;
+
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'recordPoint',
+          studentId: studentId,
+          userEmail: currentUserEmail
+        })
+      })
+      .then(res => res.json())
+      .then(data => onScoreResponse(data))
+      .catch(err => onScoreError(err));
+    }
+
+    function onScoreResponse(res) {
+      const manualBtn = document.getElementById('manualSubmitBtn');
+      manualBtn.disabled = false;
+      manualBtn.innerHTML = `<i class="fa-solid fa-plus-circle mr-1.5"></i>Add +1 Point`;
+
+      const card = document.getElementById('feedbackCard');
+      const iconBg = document.getElementById('feedbackIconBg');
+      const icon = document.getElementById('feedbackIcon');
+      const title = document.getElementById('feedbackTitle');
+      const subtitle = document.getElementById('feedbackSubtitle');
+
+      card.classList.remove('hidden');
+
+      if (res.success) {
+        playAudioSuccess();
+
+        card.className = "bg-white bh-seam p-5 shadow-hard border-l-8 border-l-emerald-500";
+        iconBg.className = "w-14 h-14 bg-emerald-500 text-white border-3 border-bhInk flex items-center justify-center text-2xl font-black shadow-hard-sm";
+        icon.className = "fa-solid fa-check";
+        title.innerText = "Score Recorded! (+1)";
+        title.className = "font-black text-lg uppercase tracking-tight text-emerald-600";
+        subtitle.innerText = res.message;
+
+        document.getElementById('resStudentName').innerText = res.student.name;
+        document.getElementById('resStudentClass').innerText = `${res.student.className} (${res.student.englishGroup})`;
+        document.getElementById('resStudentHouse').innerText = res.student.house;
+        document.getElementById('resStudentTotal').innerText = res.student.totalScore;
+        document.getElementById('studentDetailBox').classList.remove('hidden');
+
+        const sDate = document.getElementById('startDate').value;
+        const eDate = document.getElementById('endDate').value;
+        fetchFilteredLeaderboard(sDate, eDate);
+
+      } else {
+        playAudioWarning();
+
+        if (res.cooldown) {
+          card.className = "bg-white bh-seam p-5 shadow-hard border-l-8 border-l-bhYellow";
+          iconBg.className = "w-14 h-14 bg-bhYellow text-bhInk border-3 border-bhInk flex items-center justify-center text-2xl font-black shadow-hard-sm";
+          icon.className = "fa-solid fa-clock";
+          title.innerText = "1-Min Cooldown Active";
+          title.className = "font-black text-lg uppercase tracking-tight text-bhInk";
+        } else {
+          card.className = "bg-white bh-seam p-5 shadow-hard border-l-8 border-l-bhRed";
+          iconBg.className = "w-14 h-14 bg-bhRed text-white border-3 border-bhInk flex items-center justify-center text-2xl font-black shadow-hard-sm";
+          icon.className = "fa-solid fa-triangle-exclamation";
+          title.innerText = "Unable to Record Score";
+          title.className = "font-black text-lg uppercase tracking-tight text-bhRed";
+        }
+
+        subtitle.innerText = res.message;
+
+        if (res.student) {
+          document.getElementById('resStudentName').innerText = res.student.name;
+          document.getElementById('resStudentClass').innerText = res.student.className;
+          document.getElementById('resStudentHouse').innerText = res.student.house;
+          document.getElementById('resStudentTotal').innerText = "Cooldown";
+          document.getElementById('studentDetailBox').classList.remove('hidden');
+        } else {
+          document.getElementById('studentDetailBox').classList.add('hidden');
+        }
+      }
+    }
+
+    function onScoreError(err) {
+      const manualBtn = document.getElementById('manualSubmitBtn');
+      manualBtn.disabled = false;
+      manualBtn.innerHTML = `<i class="fa-solid fa-plus-circle mr-1.5"></i>Add +1 Point`;
+      alert("System communication error. Please try again.");
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function getMockLeaderboardData() {
+      return {
+        students: [
+          { name: "Alex Wong", className: "5C", classNo: "12", house: "Red", score: 28 },
+          { name: "Bella Chan", className: "5C", classNo: "15", house: "Purple", score: 24 },
+          { name: "Chris Lee", className: "5A", classNo: "04", house: "Yellow", score: 21 },
+          { name: "David Cheung", className: "5A", classNo: "09", house: "Green", score: 19 },
+          { name: "Emily Ho", className: "6B", classNo: "18", house: "Red", score: 17 }
+        ],
+        groups: [
+          { name: "Eng 5C-1", score: 52 },
+          { name: "Eng 5A-2", score: 40 },
+          { name: "Eng 6B-1", score: 35 }
+        ],
+        classes: [
+          { name: "5C", score: 68 },
+          { name: "5A", score: 45 },
+          { name: "6B", score: 38 }
+        ],
+        houses: [
+          { name: "Red", score: 145 },
+          { name: "Purple", score: 130 },
+          { name: "Yellow", score: 110 },
+          { name: "Green", score: 95 }
+        ]
+      };
+    }
+  </script>
+</body>
+</html>
