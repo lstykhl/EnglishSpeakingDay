@@ -484,9 +484,9 @@
       } catch (e) { console.log('Audio error:', e); }
     };
 
-    // On Load Initialization using Fetch
+    // On Load Initialization using Fetch with redirect: "follow"
     window.onload = () => {
-      fetch(`${GAS_API_URL}?action=getInitialData`)
+      fetch(`${GAS_API_URL}?action=getInitialData`, { redirect: "follow" })
         .then(res => res.json())
         .then(data => handleInitSuccess(data))
         .catch(err => {
@@ -498,7 +498,7 @@
           });
         });
 
-      fetch(`${GAS_API_URL}?action=getFilterOptions`)
+      fetch(`${GAS_API_URL}?action=getFilterOptions`, { redirect: "follow" })
         .then(res => res.json())
         .then(options => handleOptionsLoaded(options))
         .catch(err => {
@@ -563,7 +563,7 @@
 
       resultBox.innerHTML = `<p class="text-xs font-bold text-bhInk text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading roster scores...</p>`;
 
-      fetch(`${GAS_API_URL}?action=getStudentScores&filterType=${type}&filterValue=${encodeURIComponent(val)}&startDate=${sDate}&endDate=${eDate}`)
+      fetch(`${GAS_API_URL}?action=getStudentScores&filterType=${type}&filterValue=${encodeURIComponent(val)}&startDate=${sDate}&endDate=${eDate}`, { redirect: "follow" })
         .then(res => res.json())
         .then(data => renderTeacherStudentLookup(data))
         .catch(err => {
@@ -755,7 +755,7 @@
 
     function fetchFilteredLeaderboard(sDate, eDate) {
       const url = `${GAS_API_URL}?action=getLeaderboard&startDate=${sDate || ''}&endDate=${eDate || ''}`;
-      fetch(url)
+      fetch(url, { redirect: "follow" })
         .then(res => res.json())
         .then(data => renderLeaderboard(data))
         .catch(err => console.error("Leaderboard fetch error:", err));
@@ -875,6 +875,7 @@
 
       fetch(GAS_API_URL, {
         method: 'POST',
+        redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'recordPoint',
@@ -965,28 +966,14 @@
 
     function getMockLeaderboardData() {
       return {
-        students: [
-          { name: "Alex Wong", className: "5C", classNo: "12", house: "Red", score: 28 },
-          { name: "Bella Chan", className: "5C", classNo: "15", house: "Purple", score: 24 },
-          { name: "Chris Lee", className: "5A", classNo: "04", house: "Yellow", score: 21 },
-          { name: "David Cheung", className: "5A", classNo: "09", house: "Green", score: 19 },
-          { name: "Emily Ho", className: "6B", classNo: "18", house: "Red", score: 17 }
-        ],
-        groups: [
-          { name: "Eng 5C-1", score: 52 },
-          { name: "Eng 5A-2", score: 40 },
-          { name: "Eng 6B-1", score: 35 }
-        ],
-        classes: [
-          { name: "5C", score: 68 },
-          { name: "5A", score: 45 },
-          { name: "6B", score: 38 }
-        ],
+        students: [],
+        groups: [],
+        classes: [],
         houses: [
-          { name: "Red", score: 145 },
-          { name: "Purple", score: 130 },
-          { name: "Yellow", score: 110 },
-          { name: "Green", score: 95 }
+          { name: "Red", score: 0 },
+          { name: "Purple", score: 0 },
+          { name: "Yellow", score: 0 },
+          { name: "Green", score: 0 }
         ]
       };
     }
