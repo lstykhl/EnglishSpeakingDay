@@ -450,6 +450,26 @@
     let liveRefreshTimer = null;
     let isLiveRefreshOn = false;
 
+    // Helper for cross-origin JSONP API calls to GAS
+    function fetchGASJsonp(actionParams, callback) {
+      const callbackName = 'gas_cb_' + Math.round(100000 * Math.random());
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        callback(null, data);
+      };
+
+      const script = document.createElement('script');
+      const delimiter = actionParams.includes('?') ? '&' : '?';
+      script.src = `${GAS_API_URL}${actionParams}${delimiter}callback=${callbackName}`;
+      script.onerror = function(err) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        callback(err);
+      };
+      document.body.appendChild(script);
+    }
+
     // Web Audio Sound Generators
     const playAudioSuccess = () => {
       try {
@@ -486,24 +506,25 @@
     };
 
     // On Load Initialization using Fetch with redirect: "follow"
+    // On Load Initialization using Fetch with JSONP fallback
     window.onload = () => {
       loadInitialData();
 
-      fetch(`${GAS_API_URL}?action=getFilterOptions`, { redirect: "follow" })
-        .then(res => res.json())
-        .then(options => handleOptionsLoaded(options))
-        .catch(err => console.warn("Could not load options:", err));
+      fetchGASJsonp('?action=getFilterOptions', (err, options) => {
+        if (!err && options) handleOptionsLoaded(options);
+      });
     };
 
     function loadInitialData() {
       const emailQuery = currentUserEmail ? `&userEmail=${encodeURIComponent(currentUserEmail)}` : '';
-      fetch(`${GAS_API_URL}?action=getInitialData${emailQuery}`, { redirect: "follow" })
-        .then(res => res.json())
-        .then(data => handleInitSuccess(data))
-        .catch(err => {
+      fetchGASJsonp(`?action=getInitialData${emailQuery}`, (err, data) => {
+        if (err || !data) {
           console.error("API Connection Error:", err);
           document.getElementById('userEmailSpan').innerText = "Connection Failed";
-        });
+          return;
+        }
+        handleInitSuccess(data);
+      });
     }
 
     function promptChangeEmail() {
@@ -631,13 +652,13 @@
 
       resultBox.innerHTML = `<p class="text-xs font-bold text-bhInk text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading roster scores...</p>`;
 
-      fetch(`${GAS_API_URL}?action=getStudentScores&filterType=${type}&filterValue=${encodeURIComponent(val)}&startDate=${sDate}&endDate=${eDate}&userEmail=${encodeURIComponent(currentUserEmail)}`, { redirect: "follow" })
-        .then(res => res.json())
-        .then(data => renderTeacherStudentLookup(data))
-        .catch(err => {
-          console.error(err);
+      fetchGASJsonp(`?action=getStudentScores&filterType=${type}&filterValue=${encodeURIComponent(val)}&startDate=${sDate}&endDate=${eDate}&userEmail=${encodeURIComponent(currentUserEmail)}`, (err, data) => {
+        if (err || !data) {
           resultBox.innerHTML = `<p class="text-xs font-bold text-bhRed text-center py-3 border-2 border-bhRed">Network error loading roster.</p>`;
-        });
+          return;
+        }
+        renderTeacherStudentLookup(data);
+      });
     }
 
 // ... existing code flash ...
