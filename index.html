@@ -121,8 +121,9 @@
       <div class="flex flex-wrap items-center gap-3">
         <!-- User Status Tag -->
         <div class="bg-white border-3 border-bhInk px-3 py-1.5 flex items-center space-x-2 shadow-hard-sm text-xs font-bold">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-bhInk"></span>
-          <span id="userEmailSpan" class="font-mono text-bhInk">Loading User...</span>
+          <span id="userEmailStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-400 border border-bhInk"></span>
+          <span id="userEmailSpan" class="font-mono text-bhInk">Checking Sheet...</span>
+          <button onclick="promptChangeEmail()" class="text-[10px] underline font-black text-bhBlue hover:text-bhRed ml-1">Identity</button>
           <span id="teacherBadge" class="hidden bg-bhYellow text-bhInk text-[10px] uppercase font-extrabold px-1.5 py-0.5 border border-bhInk">
             TEACHER
           </span>
@@ -439,9 +440,9 @@
     // System State Variables & GAS API Endpoint Configuration
     const GAS_API_URL = "https://script.google.com/a/macros/lstyoungkhl.edu.hk/s/AKfycbw8aryp3-LxbJmqSjqRod2yPHyZBCkL1UKfsq_I2ctJcnOXlOYjpYK8IzJAcpd645mi/exec";
 
-    let currentUserEmail = "";
+    let currentUserEmail = localStorage.getItem('teacher_email') || "";
     let isTeacher = false;
-    let html5QrCode = null;
+
     let isCameraScanning = false;
     let lastScannedCode = "";
     let lastScanTime = 0;
@@ -486,41 +487,108 @@
 
     // On Load Initialization using Fetch with redirect: "follow"
     window.onload = () => {
-      fetch(`${GAS_API_URL}?action=getInitialData`, { redirect: "follow" })
-        .then(res => res.json())
-        .then(data => handleInitSuccess(data))
-        .catch(err => {
-          console.warn("API call failed, falling back to mock mode:", err);
-          handleInitSuccess({
-            userEmail: "teacher@lstyoungkhl.edu.hk",
-            isTeacher: true,
-            leaderboard: getMockLeaderboardData()
-          });
-        });
+      loadInitialData();
 
       fetch(`${GAS_API_URL}?action=getFilterOptions`, { redirect: "follow" })
         .then(res => res.json())
         .then(options => handleOptionsLoaded(options))
-        .catch(err => {
-          handleOptionsLoaded({
-            classes: ['5A', '5C', '6B'],
-            groups: ['Eng 5A-1', 'Eng 5C-1', 'Eng 6B-1']
-          });
-        });
+        .catch(err => console.warn("Could not load options:", err));
     };
 
+    function loadInitialData() {
+      const emailQuery = currentUserEmail ? `&userEmail=${encodeURIComponent(currentUserEmail)}` : '';
+      fetch(`${GAS_API_URL}?action=getInitialData${emailQuery}`, { redirect: "follow" })
+        .then(res => res.json())
+        .then(data => handleInitSuccess(data))
+        .catch(err => {
+          console.error("API Connection Error:", err);
+          document.getElementById('userEmailSpan').innerText = "Connection Failed";
+        });
+    }
+
+    function promptChangeEmail() {
+      const input = prompt("Enter your School Google Email (to verify Teacher status against Google Sheet):", currentUserEmail);
+      if (input !== null) {
+        currentUserEmail = input.trim();
+        localStorage.setItem('teacher_email', currentUserEmail);
+        loadInitialData();
+      }
+    }
+
     function handleInitSuccess(data) {
-      currentUserEmail = data.userEmail || "Guest User";
       isTeacher = data.isTeacher;
 
-      document.getElementById('userEmailSpan').innerText = currentUserEmail;
-      document.getElementById('unauthEmail').innerText = currentUserEmail;
+      const userSpan = document.getElementById('userEmailSpan');
+      const unauthSpan = document.getElementById('unauthEmail');
 
+      if (currentUserEmail) {
+        userSpan.innerText = currentUserEmail;
+        unauthSpan.innerText = currentUserEmail;
+      } else {
+        userSpan.innerText = "Public Visitor";
+        unauthSpan.innerText = "Public Visitor (Not Logged In)";
+      }
+
+      const dot = document.getElementById('userEmailStatusDot');
       if (isTeacher) {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 border border-bhInk";
         document.getElementById('teacherBadge').classList.remove('hidden');
         document.getElementById('unauthorizedBox').classList.add('hidden');
         document.getElementById('authorizedBox').classList.remove('hidden');
       } else {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-bhRed border border-bhInk";
+        document.getElementById('teacherBadge').classList.add('hidden');
+        document.getElementById('unauthorizedBox').classList.remove('hidden');
+        document.getElementById('authorizedBox').classList.add('hidden');
+      }
+
+      renderLeaderboard(data.leaderboard);
+    }
+
+    function switchTab(tabName) {
+      const dashSec = document.getElementById('dashboardSection');
+      const scanSec = document.getElementById('scannerSection');
+      const dashBtn = document.getElementById('navDashboardBtn');
+      const scanBtn = document.getElementById('navScannerBtn');
+
+      if (tabName === 'dashboard') {
+        dashSec.classList.remove('hidden');
+        scanSec.classList.add('hidden');
+        dashBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm";
+        scanBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition";
+        if (isCameraScanning) stopCamera();
+      } else {
+        dashSec.classList.add('hidden');
+        scanSec.classList.remove('hidden');
+        scanBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm";
+        dashBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition";
+
+        // Prompt for email if no email is set yet
+        if (!currentUserEmail && !isTeacher) {
+          promptChangeEmail();
+        }
+      }
+    }
+
+    function handleInitSuccess(data) {
+      if (data.userEmail && data.userEmail !== "Guest") {
+        currentUserEmail = data.userEmail;
+      }
+      
+      isTeacher = data.isTeacher;
+
+      document.getElementById('userEmailSpan').innerText = currentUserEmail || "Guest User";
+      document.getElementById('unauthEmail').innerText = currentUserEmail || "Guest User";
+
+      const dot = document.getElementById('userEmailStatusDot');
+      if (isTeacher) {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 border border-bhInk";
+        document.getElementById('teacherBadge').classList.remove('hidden');
+        document.getElementById('unauthorizedBox').classList.add('hidden');
+        document.getElementById('authorizedBox').classList.remove('hidden');
+      } else {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-bhRed border border-bhInk";
+        document.getElementById('teacherBadge').classList.add('hidden');
         document.getElementById('unauthorizedBox').classList.remove('hidden');
         document.getElementById('authorizedBox').classList.add('hidden');
       }
@@ -563,7 +631,7 @@
 
       resultBox.innerHTML = `<p class="text-xs font-bold text-bhInk text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading roster scores...</p>`;
 
-      fetch(`${GAS_API_URL}?action=getStudentScores&filterType=${type}&filterValue=${encodeURIComponent(val)}&startDate=${sDate}&endDate=${eDate}`, { redirect: "follow" })
+      fetch(`${GAS_API_URL}?action=getStudentScores&filterType=${type}&filterValue=${encodeURIComponent(val)}&startDate=${sDate}&endDate=${eDate}&userEmail=${encodeURIComponent(currentUserEmail)}`, { redirect: "follow" })
         .then(res => res.json())
         .then(data => renderTeacherStudentLookup(data))
         .catch(err => {
@@ -572,411 +640,4 @@
         });
     }
 
-    function renderTeacherStudentLookup(res) {
-      const resultBox = document.getElementById('teacherLookupResult');
-      resultBox.innerHTML = '';
-
-      if (!res.success || !res.students || res.students.length === 0) {
-        resultBox.innerHTML = `<p class="text-xs font-bold text-bhInk/60 text-center py-4 border-2 border-bhInk bg-bhQuiet">No matching student records found.</p>`;
-        return;
-      }
-
-      res.students.forEach(s => {
-        resultBox.innerHTML += `
-          <div class="flex items-center justify-between p-3 bg-bhGround border-2 border-bhInk text-xs">
-            <div>
-              <span class="font-black text-bhInk text-sm">${escapeHtml(s.name)}</span>
-              <span class="text-[10px] font-bold text-bhInk/70 block">
-                Class ${s.className} (#${s.classNo || '-'}) &bull; ${s.englishGroup} &bull; ${s.house} House
-              </span>
-            </div>
-            <div class="font-mono font-black text-base bg-bhYellow px-3 py-1 border border-bhInk text-bhInk">
-              ${s.score} <span class="text-[10px] font-bold">PTS</span>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function switchTab(tab) {
-      const dashBtn = document.getElementById('navDashboardBtn');
-      const scanBtn = document.getElementById('navScannerBtn');
-      const dashSec = document.getElementById('dashboardSection');
-      const scanSec = document.getElementById('scannerSection');
-
-      if (tab === 'dashboard') {
-        dashBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm";
-        scanBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition";
-        dashSec.classList.remove('hidden');
-        scanSec.classList.add('hidden');
-        stopCamera();
-      } else {
-        scanBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm";
-        dashBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition";
-        scanSec.classList.remove('hidden');
-        dashSec.classList.add('hidden');
-      }
-    }
-
-    function renderLeaderboard(data) {
-      const houseContainer = document.getElementById('houseContainer');
-      houseContainer.innerHTML = '';
-      
-      const houseThemeMap = {
-        'Red': { bg: 'bg-bhHouseRed', text: 'text-white', badge: 'bg-white text-bhHouseRed' },
-        'Purple': { bg: 'bg-bhHousePurple', text: 'text-white', badge: 'bg-white text-bhHousePurple' },
-        'Yellow': { bg: 'bg-bhHouseYellow', text: 'text-white', badge: 'bg-white text-bhHouseYellow' },
-        'Green': { bg: 'bg-bhHouseGreen', text: 'text-white', badge: 'bg-white text-bhHouseGreen' }
-      };
-
-      const houses = (data.houses && data.houses.length > 0) ? data.houses : [
-        { name: 'Red', score: 0 }, { name: 'Purple', score: 0 },
-        { name: 'Yellow', score: 0 }, { name: 'Green', score: 0 }
-      ];
-
-      const maxHouseScore = Math.max(...houses.map(h => h.score), 1);
-
-      houses.forEach((h, idx) => {
-        const theme = houseThemeMap[h.name] || { bg: 'bg-bhBlue', text: 'text-white', badge: 'bg-white text-bhBlue' };
-        const percent = Math.round((h.score / maxHouseScore) * 100);
-
-        houseContainer.innerHTML += `
-          <div class="${theme.bg} ${theme.text} bh-seam p-4 shadow-hard flex flex-col justify-between relative">
-            <div class="flex items-center justify-between mb-2">
-              <span class="font-black text-xl uppercase tracking-tight">${h.name}</span>
-              <span class="text-[11px] font-mono font-black uppercase px-2 py-0.5 border border-bhInk ${theme.badge}">
-                RANK #${idx + 1}
-              </span>
-            </div>
-            <div class="text-3xl font-black font-mono my-2">
-              ${h.score} <span class="text-xs uppercase font-sans font-bold opacity-80">PTS</span>
-            </div>
-            <div class="w-full bg-bhInk p-1 border border-bhInk">
-              <div class="bg-white h-3 border border-bhInk transition-all duration-300" style="width: ${percent}%"></div>
-            </div>
-          </div>
-        `;
-      });
-
-      const studentList = document.getElementById('studentList');
-      studentList.innerHTML = '';
-      if (!data.students || data.students.length === 0) {
-        studentList.innerHTML = `<div class="text-xs font-bold text-bhInk/50 py-8 text-center border-2 border-dashed border-bhInk/30">No student scores recorded.</div>`;
-      } else {
-        data.students.forEach((s, idx) => {
-          let badgeClass = "bg-bhQuiet text-bhInk";
-          if (idx === 0) badgeClass = "bg-bhYellow text-bhInk font-black border-2 border-bhInk";
-          else if (idx === 1) badgeClass = "bg-white text-bhInk font-black border-2 border-bhInk";
-          else if (idx === 2) badgeClass = "bg-bhRed text-white font-black border-2 border-bhInk";
-
-          studentList.innerHTML += `
-            <div class="flex items-center justify-between p-2.5 bg-bhGround border-2 border-bhInk hover:bg-white transition">
-              <div class="flex items-center space-x-3">
-                <span class="w-7 h-7 border border-bhInk flex items-center justify-center font-mono font-black text-xs ${badgeClass}">
-                  ${idx + 1}
-                </span>
-                <div>
-                  <h4 class="text-xs font-black uppercase text-bhInk">${escapeHtml(s.name)}</h4>
-                  <p class="text-[10px] font-bold text-bhInk/70">Class ${s.className} (${s.classNo || '-'}) &bull; ${s.house}</p>
-                </div>
-              </div>
-              <span class="font-mono font-black text-sm text-bhInk bg-white px-2 py-0.5 border border-bhInk">${s.score}</span>
-            </div>
-          `;
-        });
-      }
-
-      const groupList = document.getElementById('groupList');
-      groupList.innerHTML = '';
-      if (!data.groups || data.groups.length === 0) {
-        groupList.innerHTML = `<div class="text-xs font-bold text-bhInk/50 py-8 text-center border-2 border-dashed border-bhInk/30">No group scores recorded.</div>`;
-      } else {
-        data.groups.forEach((g, idx) => {
-          groupList.innerHTML += `
-            <div class="flex items-center justify-between p-3 bg-bhGround border-2 border-bhInk">
-              <div class="flex items-center space-x-3">
-                <span class="font-mono font-black text-xs bg-bhBlue text-white w-6 h-6 flex items-center justify-center border border-bhInk">#${idx + 1}</span>
-                <span class="text-xs font-black uppercase text-bhInk">${escapeHtml(g.name)}</span>
-              </div>
-              <span class="font-mono font-black text-sm text-bhBlue">${g.score} PTS</span>
-            </div>
-          `;
-        });
-      }
-
-      const classList = document.getElementById('classList');
-      classList.innerHTML = '';
-      if (!data.classes || data.classes.length === 0) {
-        classList.innerHTML = `<div class="text-xs font-bold text-bhInk/50 py-8 text-center border-2 border-dashed border-bhInk/30">No class scores recorded.</div>`;
-      } else {
-        data.classes.forEach((c, idx) => {
-          classList.innerHTML += `
-            <div class="flex items-center justify-between p-3 bg-bhGround border-2 border-bhInk">
-              <div class="flex items-center space-x-3">
-                <span class="font-mono font-black text-xs bg-bhYellow text-bhInk w-6 h-6 flex items-center justify-center border border-bhInk">#${idx + 1}</span>
-                <span class="text-xs font-black uppercase text-bhInk">Class ${escapeHtml(c.name)}</span>
-              </div>
-              <span class="font-mono font-black text-sm text-bhInk">${c.score} PTS</span>
-            </div>
-          `;
-        });
-      }
-    }
-
-    function setDatePreset(type) {
-      const allBtn = document.getElementById('presetAllBtn');
-      const todayBtn = document.getElementById('presetTodayBtn');
-      const startDateInput = document.getElementById('startDate');
-      const endDateInput = document.getElementById('endDate');
-
-      if (type === 'all') {
-        allBtn.className = "px-3 py-1.5 font-black uppercase bg-bhBlue text-white border border-bhInk";
-        todayBtn.className = "px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk";
-        startDateInput.value = "";
-        endDateInput.value = "";
-        fetchFilteredLeaderboard(null, null);
-      } else if (type === 'today') {
-        todayBtn.className = "px-3 py-1.5 font-black uppercase bg-bhBlue text-white border border-bhInk";
-        allBtn.className = "px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk";
-        const todayStr = new Date().toISOString().split('T')[0];
-        startDateInput.value = todayStr;
-        endDateInput.value = todayStr;
-        fetchFilteredLeaderboard(todayStr, todayStr);
-      }
-    }
-
-    function applyDateFilter() {
-      const startDate = document.getElementById('startDate').value;
-      const endDate = document.getElementById('endDate').value;
-      document.getElementById('presetAllBtn').className = "px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk";
-      document.getElementById('presetTodayBtn').className = "px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk";
-      fetchFilteredLeaderboard(startDate, endDate);
-    }
-
-    function fetchFilteredLeaderboard(sDate, eDate) {
-      const url = `${GAS_API_URL}?action=getLeaderboard&startDate=${sDate || ''}&endDate=${eDate || ''}`;
-      fetch(url, { redirect: "follow" })
-        .then(res => res.json())
-        .then(data => renderLeaderboard(data))
-        .catch(err => console.error("Leaderboard fetch error:", err));
-    }
-
-    function toggleLiveRefresh() {
-      isLiveRefreshOn = !isLiveRefreshOn;
-      const dot = document.getElementById('liveDot');
-      const txt = document.getElementById('liveText');
-
-      if (isLiveRefreshOn) {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 border border-bhInk animate-pulse";
-        txt.innerText = "Live Auto-Refresh: ON (10s)";
-        liveRefreshTimer = setInterval(() => {
-          const sDate = document.getElementById('startDate').value;
-          const eDate = document.getElementById('endDate').value;
-          fetchFilteredLeaderboard(sDate, eDate);
-        }, 10000);
-      } else {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-slate-400 border border-bhInk";
-        txt.innerText = "Live Auto-Refresh: Off";
-        if (liveRefreshTimer) clearInterval(liveRefreshTimer);
-      }
-    }
-
-    function toggleCamera() {
-      if (isCameraScanning) {
-        stopCamera();
-      } else {
-        startCamera();
-      }
-    }
-
-    function startCamera() {
-      const btn = document.getElementById('toggleCameraBtn');
-      const placeholder = document.getElementById('cameraPlaceholder');
-
-      placeholder.classList.add('hidden');
-      btn.innerHTML = `<i class="fa-solid fa-stop mr-1.5"></i>Stop Camera`;
-      btn.className = "btn-hard px-5 py-2.5 bg-bhRed hover:bg-bhInk text-white border-3 border-bhInk font-black text-xs uppercase tracking-wider shadow-hard-sm transition";
-
-      html5QrCode = new Html5Qrcode("reader");
-      const config = { 
-        fps: 15, 
-        qrbox: { width: 280, height: 160 },
-        formatsToSupport: [ 
-          Html5QrcodeSupportedFormats.CODE_128, 
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.QR_CODE
-        ]
-      };
-
-      html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        onBarcodeScanned
-      ).then(() => {
-        isCameraScanning = true;
-      }).catch(err => {
-        console.error("Camera start error:", err);
-        alert("Could not access camera. Please verify device permissions.");
-        stopCamera();
-      });
-    }
-
-    function stopCamera() {
-      if (html5QrCode && isCameraScanning) {
-        html5QrCode.stop().then(() => {
-          isCameraScanning = false;
-          resetCameraUI();
-        }).catch(err => {
-          console.error("Stop camera error:", err);
-          resetCameraUI();
-        });
-      } else {
-        resetCameraUI();
-      }
-    }
-
-    function resetCameraUI() {
-      isCameraScanning = false;
-      const btn = document.getElementById('toggleCameraBtn');
-      const placeholder = document.getElementById('cameraPlaceholder');
-      if (btn) {
-        btn.innerHTML = `<i class="fa-solid fa-video mr-1.5"></i>Start Camera`;
-        btn.className = "btn-hard px-5 py-2.5 bg-bhYellow hover:bg-white text-bhInk border-3 border-bhInk font-black text-xs uppercase tracking-wider shadow-hard-sm transition";
-      }
-      if (placeholder) placeholder.classList.remove('hidden');
-    }
-
-    function onBarcodeScanned(decodedText) {
-      const now = Date.now();
-      if (decodedText === lastScannedCode && (now - lastScanTime) < 2000) {
-        return;
-      }
-      lastScannedCode = decodedText;
-      lastScanTime = now;
-
-      submitScore(decodedText);
-    }
-
-    function handleManualSubmit(e) {
-      e.preventDefault();
-      const input = document.getElementById('manualIdInput');
-      const studentId = input.value.trim();
-      if (!studentId) return;
-
-      submitScore(studentId);
-      input.value = '';
-    }
-
-    function submitScore(studentId) {
-      const manualBtn = document.getElementById('manualSubmitBtn');
-      manualBtn.disabled = true;
-      manualBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i>Saving...`;
-
-      fetch(GAS_API_URL, {
-        method: 'POST',
-        redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'recordPoint',
-          studentId: studentId,
-          userEmail: currentUserEmail
-        })
-      })
-      .then(res => res.json())
-      .then(data => onScoreResponse(data))
-      .catch(err => onScoreError(err));
-    }
-
-    function onScoreResponse(res) {
-      const manualBtn = document.getElementById('manualSubmitBtn');
-      manualBtn.disabled = false;
-      manualBtn.innerHTML = `<i class="fa-solid fa-plus-circle mr-1.5"></i>Add +1 Point`;
-
-      const card = document.getElementById('feedbackCard');
-      const iconBg = document.getElementById('feedbackIconBg');
-      const icon = document.getElementById('feedbackIcon');
-      const title = document.getElementById('feedbackTitle');
-      const subtitle = document.getElementById('feedbackSubtitle');
-
-      card.classList.remove('hidden');
-
-      if (res.success) {
-        playAudioSuccess();
-
-        card.className = "bg-white bh-seam p-5 shadow-hard border-l-8 border-l-emerald-500";
-        iconBg.className = "w-14 h-14 bg-emerald-500 text-white border-3 border-bhInk flex items-center justify-center text-2xl font-black shadow-hard-sm";
-        icon.className = "fa-solid fa-check";
-        title.innerText = "Score Recorded! (+1)";
-        title.className = "font-black text-lg uppercase tracking-tight text-emerald-600";
-        subtitle.innerText = res.message;
-
-        document.getElementById('resStudentName').innerText = res.student.name;
-        document.getElementById('resStudentClass').innerText = `${res.student.className} (${res.student.englishGroup})`;
-        document.getElementById('resStudentHouse').innerText = res.student.house;
-        document.getElementById('resStudentTotal').innerText = res.student.totalScore;
-        document.getElementById('studentDetailBox').classList.remove('hidden');
-
-        const sDate = document.getElementById('startDate').value;
-        const eDate = document.getElementById('endDate').value;
-        fetchFilteredLeaderboard(sDate, eDate);
-
-      } else {
-        playAudioWarning();
-
-        if (res.cooldown) {
-          card.className = "bg-white bh-seam p-5 shadow-hard border-l-8 border-l-bhYellow";
-          iconBg.className = "w-14 h-14 bg-bhYellow text-bhInk border-3 border-bhInk flex items-center justify-center text-2xl font-black shadow-hard-sm";
-          icon.className = "fa-solid fa-clock";
-          title.innerText = "1-Min Cooldown Active";
-          title.className = "font-black text-lg uppercase tracking-tight text-bhInk";
-        } else {
-          card.className = "bg-white bh-seam p-5 shadow-hard border-l-8 border-l-bhRed";
-          iconBg.className = "w-14 h-14 bg-bhRed text-white border-3 border-bhInk flex items-center justify-center text-2xl font-black shadow-hard-sm";
-          icon.className = "fa-solid fa-triangle-exclamation";
-          title.innerText = "Unable to Record Score";
-          title.className = "font-black text-lg uppercase tracking-tight text-bhRed";
-        }
-
-        subtitle.innerText = res.message;
-
-        if (res.student) {
-          document.getElementById('resStudentName').innerText = res.student.name;
-          document.getElementById('resStudentClass').innerText = res.student.className;
-          document.getElementById('resStudentHouse').innerText = res.student.house;
-          document.getElementById('resStudentTotal').innerText = "Cooldown";
-          document.getElementById('studentDetailBox').classList.remove('hidden');
-        } else {
-          document.getElementById('studentDetailBox').classList.add('hidden');
-        }
-      }
-    }
-
-    function onScoreError(err) {
-      const manualBtn = document.getElementById('manualSubmitBtn');
-      manualBtn.disabled = false;
-      manualBtn.innerHTML = `<i class="fa-solid fa-plus-circle mr-1.5"></i>Add +1 Point`;
-      alert("System communication error. Please try again.");
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    function getMockLeaderboardData() {
-      return {
-        students: [],
-        groups: [],
-        classes: [],
-        houses: [
-          { name: "Red", score: 0 },
-          { name: "Purple", score: 0 },
-          { name: "Yellow", score: 0 },
-          { name: "Green", score: 0 }
-        ]
-      };
-    }
-  </script>
-</body>
-</html>
+// ... existing code flash ...
