@@ -2,663 +2,364 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>English Speaking Day - Leaderboard & Scoring</title>
-  
-  <!-- Fonts: Host Grotesk & Space Grotesk -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- HTML5 QR Code Reader Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            bhGround: '#f4f3ed',
-            bhInk: '#0a0a0a',
-            bhRed: '#d92323',
-            bhBlue: '#1d4ed8',
-            bhYellow: '#facc15',
-            bhQuiet: '#e2e0d5',
-            bhHouseRed: '#dc2626',
-            bhHousePurple: '#7e22ce',
-            bhHouseYellow: '#d97706',
-            bhHouseGreen: '#059669'
-          },
-          fontFamily: {
-            sans: ['"Host Grotesk"', 'sans-serif'],
-            mono: ['"Space Grotesk"', 'monospace']
-          },
-          borderWidth: {
-            '3': '3px',
-            '4': '4px',
-            '5': '5px',
-            '6': '6px'
-          },
-          boxShadow: {
-            'hard': '4px 4px 0px #000000',
-            'hard-lg': '6px 6px 0px #000000',
-            'hard-sm': '2px 2px 0px #000000',
-            'hard-red': '4px 4px 0px #d92323',
-            'hard-yellow': '4px 4px 0px #facc15'
-          }
-        }
-      }
-    }
-  </script>
-
+  <title>English Speaking Day</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+
+    :root {
+      --dp-color-ground: #f5f4ee;
+      --dp-color-ink: #000000;
+      --dp-color-accent: #ff0000;
+      --dp-color-field: #0000ff;
+      --dp-color-field-support: #ffff00;
+      --dp-color-quiet: #e8e8e8;
+      --dp-color-on-field: #ffffff;
+      --dp-typography-face: "Space Grotesk", "Bauhaus Host", sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
-      background-color: #f4f3ed;
-      color: #0a0a0a;
-      font-family: "Host Grotesk", sans-serif;
+      background-color: var(--dp-color-ground);
+      color: var(--dp-color-ink);
+      font-family: var(--dp-typography-face);
+      line-height: 1.5;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      min-height: 100vh;
+      border: 4px solid var(--dp-color-ink);
+    }
+
+    .plane-main {
+      flex: 1 1 65%;
+      padding: clamp(22px, 4.45cqi, 72px);
+      border-right: 4px solid var(--dp-color-ink);
+    }
+
+    .plane-action {
+      flex: 1 1 35%;
+      background-color: var(--dp-color-accent);
+      padding: clamp(22px, 4.45cqi, 72px);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    h1, h2, h3 { font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; }
+    h1 { font-size: 3rem; margin-bottom: 2rem; line-height: 1; }
+    h2 { font-size: 2rem; background: var(--dp-color-field-support); display: inline-block; padding: 4px 12px; border: 4px solid var(--dp-color-ink); margin-bottom: 1.5rem; }
+
+    .grid-rules {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0;
+      border: 4px solid var(--dp-color-ink);
+      background: var(--dp-color-ink);
     }
     
-    /* Hard Bauhaus Grid borders */
-    .bh-seam {
-      border: 4px solid #000000;
+    .grid-cell {
+      background: var(--dp-color-ground);
+      padding: 1.5rem;
+      border: 2px solid var(--dp-color-ink);
     }
 
-    .bh-seam-bottom {
-      border-bottom: 4px solid #000000;
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 3px solid var(--dp-color-ink);
+      padding: 12px 0;
+      font-size: 1.1rem;
+      font-weight: 600;
     }
 
-    .bh-seam-right {
-      border-right: 4px solid #000000;
+    .podium-1 { background: var(--dp-color-field-support); padding: 8px; border: 3px solid var(--dp-color-ink); font-size: 1.3rem; }
+    .podium-2 { background: var(--dp-color-quiet); padding: 8px; border: 3px solid var(--dp-color-ink); }
+
+    .house-bar-container { width: 100%; border: 3px solid var(--dp-color-ink); height: 30px; margin-top: 8px; background: var(--dp-color-ground); }
+    .house-bar { height: 100%; transition: width 0.5s ease; }
+    
+    .bg-Red { background-color: #ff0000; }
+    .bg-Purple { background-color: #a855f7; }
+    .bg-Yellow { background-color: #facc15; }
+    .bg-Green { background-color: #10b981; }
+
+    /* Teacher Actions */
+    .action-circle {
+      background: var(--dp-color-ground);
+      color: var(--dp-color-ink);
+      border: 4px solid var(--dp-color-ink);
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 750;
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 6px 6px 0px var(--dp-color-ink);
+      transition: all 0.1s;
+      align-self: center;
+      margin: 20px 0;
+    }
+    .action-circle:active { box-shadow: 0px 0px 0px var(--dp-color-ink); transform: translate(6px, 6px); }
+
+    .input-rect {
+      background: var(--dp-color-field);
+      color: var(--dp-color-on-field);
+      border: 4px solid var(--dp-color-ink);
+      padding: 16px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      width: 100%;
+      outline: none;
+    }
+    .input-rect::placeholder { color: rgba(255,255,255,0.7); }
+
+    #reader { border: 4px solid var(--dp-color-ink); background: var(--dp-color-ink); width: 100%; }
+
+    .status-panel {
+      padding: 16px; border: 4px solid var(--dp-color-ink); font-weight: 700; display: none; margin-top: 16px;
+    }
+    .status-success { background: #10b981; color: #fff; }
+    .status-warn { background: #facc15; color: #000; }
+    .status-error { background: var(--dp-color-ink); color: #fff; }
+
+    .controls-row { display: flex; gap: 8px; margin-bottom: 24px; }
+    select, input[type="date"] {
+      padding: 8px; border: 3px solid var(--dp-color-ink); font-family: inherit; font-weight: 600; flex: 1;
+    }
+    .btn-square {
+      background: var(--dp-color-field); color: white; border: 3px solid var(--dp-color-ink); padding: 8px 16px; cursor: pointer; font-weight: 700;
     }
 
-    /* HTML5 QR Code Video override */
-    #reader video {
-      object-fit: cover !important;
-      border: 3px solid #000 !important;
-    }
-
-    /* Smooth focus rings */
-    *:focus-visible {
-      outline: 4px solid #1d4ed8 !important;
-      outline-offset: 2px !important;
-    }
-
-    /* Hard button active animation */
-    .btn-hard:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0px #000000 !important;
+    @media (max-width: 720px) {
+      .plane-main { border-right: none; border-bottom: 4px solid var(--dp-color-ink); }
+      .container { flex-direction: column; }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-bhGround border-t-8 border-bhInk">
+<body>
 
-  <!-- TOP HEADER / NAV BAR -->
-  <header class="bg-bhGround bh-seam-bottom sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-      
-      <!-- Brand & Title -->
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 bg-bhRed border-3 border-bhInk flex items-center justify-center font-black text-white text-xl shadow-hard-sm">
-          E
-        </div>
-        <div>
-          <h1 class="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none text-bhInk">
-            English Speaking Day
-          </h1>
-          <p class="text-xs font-bold uppercase tracking-wider text-bhInk/70 mt-0.5">
-            Live Scoring & Ranking System
-          </p>
-        </div>
+<div class="container">
+  <!-- LEADERBOARD PLANE -->
+  <div class="plane-main">
+    <h1>English Speaking Day</h1>
+    
+    <div class="controls-row">
+      <select id="presetRange" onchange="applyPreset()">
+        <option value="all">All-Time Standing</option>
+        <option value="today">Today's Live</option>
+      </select>
+      <input type="date" id="startDate" onchange="refreshLeaderboard()">
+      <input type="date" id="endDate" onchange="refreshLeaderboard()">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="liveRefresh" checked> <b>Live Refresh</b>
       </div>
-
-      <!-- Navigation & User Info -->
-      <div class="flex flex-wrap items-center gap-3">
-        <!-- User Status Tag -->
-        <div class="bg-white border-3 border-bhInk px-3 py-1.5 flex items-center space-x-2 shadow-hard-sm text-xs font-bold">
-          <span id="userEmailStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-400 border border-bhInk"></span>
-          <span id="userEmailSpan" class="font-mono text-bhInk">Checking Sheet...</span>
-          <button onclick="promptChangeEmail()" class="text-[10px] underline font-black text-bhBlue hover:text-bhRed ml-1">Identity</button>
-          <span id="teacherBadge" class="hidden bg-bhYellow text-bhInk text-[10px] uppercase font-extrabold px-1.5 py-0.5 border border-bhInk">
-            TEACHER
-          </span>
-        </div>
-
-        <!-- Navigation Buttons -->
-        <div class="flex border-3 border-bhInk bg-bhInk p-0.5 gap-0.5">
-          <button id="navDashboardBtn" onclick="switchTab('dashboard')" 
-            class="px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm">
-            <i class="fa-solid fa-trophy mr-1.5"></i>Leaderboard
-          </button>
-          <button id="navScannerBtn" onclick="switchTab('scanner')" 
-            class="px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition">
-            <i class="fa-solid fa-barcode mr-1.5"></i>Scanner Panel
-          </button>
-        </div>
-      </div>
-
     </div>
-  </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-
-    <!-- ================= DASHBOARD TAB ================= -->
-    <section id="dashboardSection" class="space-y-8">
-
-      <!-- FILTER & REFRESH HEADER PLANE -->
-      <div class="bg-white bh-seam p-5 shadow-hard flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div>
-          <div class="inline-block bg-bhRed text-white text-[10px] font-black uppercase px-2 py-0.5 border border-bhInk mb-1">
-            Time Filter Range
-          </div>
-          <h2 class="text-2xl font-black uppercase tracking-tight text-bhInk">
-            Performance Leaderboards
-          </h2>
-        </div>
-
-        <!-- Filter Controls -->
-        <div class="flex flex-wrap items-center gap-2 text-xs font-bold w-full lg:w-auto">
-          <!-- Quick Presets -->
-          <div class="flex border-2 border-bhInk bg-bhGround p-1 gap-1">
-            <button id="presetAllBtn" onclick="setDatePreset('all')" class="px-3 py-1.5 font-black uppercase bg-bhBlue text-white border border-bhInk">
-              All Time
-            </button>
-            <button id="presetTodayBtn" onclick="setDatePreset('today')" class="px-3 py-1.5 font-black uppercase bg-white text-bhInk hover:bg-bhYellow border border-bhInk">
-              Today
-            </button>
-          </div>
-
-          <!-- Date Inputs -->
-          <div class="flex items-center gap-1 bg-bhGround border-2 border-bhInk p-1">
-            <input type="date" id="startDate" onchange="applyDateFilter()" class="bg-white border border-bhInk px-2 py-1 text-xs font-mono font-bold focus:bg-bhYellow">
-            <span class="font-black text-bhInk">&rarr;</span>
-            <input type="date" id="endDate" onchange="applyDateFilter()" class="bg-white border border-bhInk px-2 py-1 text-xs font-mono font-bold focus:bg-bhYellow">
-          </div>
-
-          <!-- Live Refresh Switcher -->
-          <button id="liveRefreshBtn" onclick="toggleLiveRefresh()" class="btn-hard px-3 py-2 bg-bhGround hover:bg-white text-bhInk border-2 border-bhInk font-black uppercase flex items-center space-x-1.5 shadow-hard-sm">
-            <span id="liveDot" class="w-2.5 h-2.5 rounded-full bg-slate-400 border border-bhInk"></span>
-            <span id="liveText">Live Auto-Refresh: Off</span>
-          </button>
-        </div>
+    <div class="grid-rules">
+      <div class="grid-cell">
+        <h2>Top 10 Stars</h2>
+        <div id="studentList">Loading...</div>
       </div>
+      <div class="grid-cell">
+        <h2>House Ranking</h2>
+        <div id="houseList">Loading...</div>
+        
+        <h2 style="margin-top:2rem;">Top 5 Groups</h2>
+        <div id="groupList">Loading...</div>
 
-      <!-- HOUSE RANKING (HERO COMPONENT - 4 COLUMNS / 4 PLANES) -->
-      <div>
-        <div class="flex items-center space-x-2 mb-3">
-          <div class="w-4 h-4 bg-bhYellow border-2 border-bhInk"></div>
-          <h3 class="text-lg font-black uppercase tracking-tight text-bhInk">
-            House Championship Standing
-          </h3>
-        </div>
-
-        <!-- 4 House Cards -->
-        <div id="houseContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Dynamically Rendered -->
-        </div>
+        <h2 style="margin-top:2rem;">Top 5 Classes</h2>
+        <div id="classList">Loading...</div>
       </div>
-
-      <!-- MAIN RANKINGS GRID (3 COLUMNS) -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <!-- COLUMN 1: STAR STUDENT SPEAKERS (TOP 10) -->
-        <div class="bg-white bh-seam p-5 shadow-hard flex flex-col">
-          <div class="flex items-center justify-between pb-3 mb-4 border-b-4 border-bhInk">
-            <div class="flex items-center space-x-2">
-              <span class="w-6 h-6 bg-bhRed border-2 border-bhInk text-white flex items-center justify-center font-black text-xs">10</span>
-              <h3 class="font-black text-base uppercase text-bhInk">Star Student Speakers</h3>
-            </div>
-            <span class="text-[10px] font-black uppercase bg-bhYellow px-2 py-0.5 border border-bhInk">Top 10</span>
-          </div>
-
-          <!-- Student List -->
-          <div id="studentList" class="space-y-2.5 flex-1">
-            <!-- Dynamically Rendered -->
-          </div>
-        </div>
-
-        <!-- COLUMN 2: TOP ENGLISH SPEAKING GROUPS (TOP 5) -->
-        <div class="bg-white bh-seam p-5 shadow-hard flex flex-col">
-          <div class="flex items-center justify-between pb-3 mb-4 border-b-4 border-bhInk">
-            <div class="flex items-center space-x-2">
-              <span class="w-6 h-6 bg-bhBlue border-2 border-bhInk text-white flex items-center justify-center font-black text-xs">5</span>
-              <h3 class="font-black text-base uppercase text-bhInk">Top English Groups</h3>
-            </div>
-            <span class="text-[10px] font-black uppercase bg-bhBlue text-white px-2 py-0.5 border border-bhInk">Top 5</span>
-          </div>
-
-          <!-- Group List -->
-          <div id="groupList" class="space-y-2.5 flex-1">
-            <!-- Dynamically Rendered -->
-          </div>
-        </div>
-
-        <!-- COLUMN 3: OUTSTANDING SPEAKING CLASSES (TOP 5) -->
-        <div class="bg-white bh-seam p-5 shadow-hard flex flex-col">
-          <div class="flex items-center justify-between pb-3 mb-4 border-b-4 border-bhInk">
-            <div class="flex items-center space-x-2">
-              <span class="w-6 h-6 bg-bhYellow border-2 border-bhInk text-bhInk flex items-center justify-center font-black text-xs">5</span>
-              <h3 class="font-black text-base uppercase text-bhInk">Outstanding Classes</h3>
-            </div>
-            <span class="text-[10px] font-black uppercase bg-bhQuiet text-bhInk px-2 py-0.5 border border-bhInk">Top 5</span>
-          </div>
-
-          <!-- Class List -->
-          <div id="classList" class="space-y-2.5 flex-1">
-            <!-- Dynamically Rendered -->
-          </div>
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- ================= SCANNER & TEACHER TAB ================= -->
-    <section id="scannerSection" class="hidden space-y-8 max-w-4xl mx-auto">
-
-      <!-- UNAUTHORIZED ALERT BLOCK -->
-      <div id="unauthorizedBox" class="bg-bhRed text-white bh-seam p-8 shadow-hard text-center space-y-4">
-        <div class="w-16 h-16 bg-white text-bhRed border-4 border-bhInk mx-auto flex items-center justify-center text-3xl font-black">
-          !
-        </div>
-        <h2 class="text-2xl font-black uppercase tracking-tight">Access Restricted to Teachers</h2>
-        <p class="text-sm font-bold max-w-md mx-auto leading-relaxed">
-          Your account (<span class="font-mono underline" id="unauthEmail"></span>) is not registered in the Teachers authorization list. Only verified teachers can record student scores.
-        </p>
-      </div>
-
-      <!-- AUTHORIZED TEACHER SCANNING PANEL -->
-      <div id="authorizedBox" class="space-y-6">
-
-        <!-- Split Planes: Red Action Header + Scanner Body -->
-        <div class="bg-white bh-seam shadow-hard">
-          <!-- Red Header Plane -->
-          <div class="bg-bhRed text-white p-4 border-b-4 border-bhInk flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h2 class="text-xl font-black uppercase tracking-tight flex items-center">
-                <i class="fa-solid fa-camera mr-2 text-bhYellow"></i>Barcode Student Scanner
-              </h2>
-              <p class="text-xs font-bold text-white/90">Point camera at Student ID barcode to add score instantly</p>
-            </div>
-
-            <!-- Start/Stop Camera Large Action Button -->
-            <button id="toggleCameraBtn" onclick="toggleCamera()" 
-              class="btn-hard px-5 py-2.5 bg-bhYellow hover:bg-white text-bhInk border-3 border-bhInk font-black text-xs uppercase tracking-wider shadow-hard-sm transition">
-              <i class="fa-solid fa-video mr-1.5"></i>Start Camera
-            </button>
-          </div>
-
-          <!-- Video Camera Container -->
-          <div class="p-4 bg-bhGround relative min-h-[280px] flex items-center justify-center border-b-4 border-bhInk">
-            <div id="reader" class="w-full max-w-md"></div>
-            
-            <div id="cameraPlaceholder" class="flex flex-col items-center justify-center text-bhInk p-8 text-center space-y-3">
-              <div class="w-20 h-20 bg-white border-4 border-bhInk flex items-center justify-center text-3xl shadow-hard-sm">
-                <i class="fa-solid fa-barcode text-bhInk"></i>
-              </div>
-              <p class="text-xs font-black uppercase tracking-wide max-w-xs">
-                Camera scanner is inactive. Click "Start Camera" above or type Student ID manually below.
-              </p>
-            </div>
-          </div>
-
-          <!-- Manual ID Input Footer Plane -->
-          <div class="p-5 bg-white">
-            <h3 class="text-sm font-black uppercase text-bhInk mb-1 flex items-center">
-              <i class="fa-solid fa-keyboard mr-2 text-bhBlue"></i>Manual Student ID Input
-            </h3>
-            <p class="text-xs font-bold text-bhInk/70 mb-3">
-              If the student card barcode fails or is missing, enter the 6-digit Student ID.
-            </p>
-
-            <form onsubmit="handleManualSubmit(event)" class="flex flex-col sm:flex-row gap-2">
-              <input type="text" id="manualIdInput" placeholder="Enter ID e.g. 221036" 
-                class="flex-1 bg-bhGround border-3 border-bhInk px-4 py-2.5 text-bhInk font-mono font-bold text-sm focus:bg-bhYellow focus:outline-none placeholder-bhInk/40">
-              <button type="submit" id="manualSubmitBtn" 
-                class="btn-hard bg-bhBlue hover:bg-bhInk text-white font-black px-6 py-2.5 border-3 border-bhInk text-xs uppercase tracking-wider shadow-hard-sm">
-                <i class="fa-solid fa-plus-circle mr-1.5"></i>Add +1 Point
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <!-- SCORING FEEDBACK POPUP CARD -->
-        <div id="feedbackCard" class="hidden bg-white bh-seam p-5 shadow-hard transition-all duration-200">
-          <div class="flex items-start justify-between">
-            <div class="flex items-center space-x-4">
-              <!-- Hard Shape Icon -->
-              <div id="feedbackIconBg" class="w-14 h-14 border-3 border-bhInk flex items-center justify-center text-2xl font-black shadow-hard-sm">
-                <i id="feedbackIcon" class="fa-solid fa-check"></i>
-              </div>
-              <div>
-                <h4 id="feedbackTitle" class="font-black text-lg uppercase tracking-tight text-bhInk">Score Added!</h4>
-                <p id="feedbackSubtitle" class="text-xs font-bold text-bhInk/70">Student updated successfully.</p>
-              </div>
-            </div>
-            <span id="feedbackTime" class="text-[10px] font-mono font-bold uppercase bg-bhQuiet px-2 py-1 border border-bhInk">Just now</span>
-          </div>
-
-          <!-- Student Profile Detail Ledger -->
-          <div id="studentDetailBox" class="mt-4 pt-4 border-t-4 border-bhInk grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-            <div class="bg-bhGround p-2.5 border-2 border-bhInk">
-              <span class="text-[10px] font-black uppercase text-bhInk/60 block">Student Name</span>
-              <span id="resStudentName" class="font-black text-bhInk text-sm">--</span>
-            </div>
-            <div class="bg-bhGround p-2.5 border-2 border-bhInk">
-              <span class="text-[10px] font-black uppercase text-bhInk/60 block">Class / Group</span>
-              <span id="resStudentClass" class="font-bold text-bhInk">--</span>
-            </div>
-            <div class="bg-bhGround p-2.5 border-2 border-bhInk">
-              <span class="text-[10px] font-black uppercase text-bhInk/60 block">House Affiliation</span>
-              <span id="resStudentHouse" class="font-bold text-bhInk">--</span>
-            </div>
-            <div class="bg-bhYellow p-2.5 border-2 border-bhInk">
-              <span class="text-[10px] font-black uppercase text-bhInk/80 block">Updated Total</span>
-              <span id="resStudentTotal" class="font-black text-bhInk text-base">--</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- TEACHER LOOKUP PLANE (CLASS / GROUP SCORE LOOKUP) -->
-        <div class="bg-white bh-seam p-5 shadow-hard space-y-4">
-          <div class="flex items-center justify-between pb-3 border-b-4 border-bhInk">
-            <h3 class="text-base font-black uppercase tracking-tight text-bhInk flex items-center">
-              <i class="fa-solid fa-list-check text-bhRed mr-2"></i>Class & Group Student Score Lookup
-            </h3>
-            <span class="text-[10px] bg-bhBlue text-white font-black px-2 py-0.5 border border-bhInk uppercase">Teacher Exclusive</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <!-- Filter Type -->
-            <div>
-              <label class="block text-[10px] font-black uppercase text-bhInk mb-1">Lookup Category</label>
-              <select id="tFilterType" onchange="onTeacherFilterTypeChange()" class="w-full bg-bhGround border-3 border-bhInk px-3 py-2 text-xs font-bold text-bhInk focus:bg-bhYellow">
-                <option value="class">Filter by Class</option>
-                <option value="group">Filter by English Group</option>
-              </select>
-            </div>
-
-            <!-- Target Selection -->
-            <div>
-              <label class="block text-[10px] font-black uppercase text-bhInk mb-1">Select Target</label>
-              <select id="tFilterValue" class="w-full bg-bhGround border-3 border-bhInk px-3 py-2 text-xs font-bold text-bhInk focus:bg-bhYellow">
-                <option value="">Select Category...</option>
-              </select>
-            </div>
-
-            <!-- Submit Lookup -->
-            <div class="flex items-end">
-              <button onclick="fetchTeacherStudentScores()" class="btn-hard w-full bg-bhYellow hover:bg-bhInk hover:text-white text-bhInk font-black px-4 py-2 border-3 border-bhInk text-xs uppercase shadow-hard-sm">
-                Search Roster Scores
-              </button>
-            </div>
-          </div>
-
-          <!-- Date Filters for Lookup -->
-          <div class="flex flex-wrap items-center gap-2 text-xs font-bold bg-bhGround p-3 border-2 border-bhInk">
-            <span class="text-bhInk uppercase text-[10px]">Filter Date:</span>
-            <input type="date" id="tStartDate" class="bg-white border border-bhInk px-2 py-1 text-xs font-mono font-bold">
-            <span class="text-bhInk">&rarr;</span>
-            <input type="date" id="tEndDate" class="bg-white border border-bhInk px-2 py-1 text-xs font-mono font-bold">
-          </div>
-
-          <!-- Lookup Table Output -->
-          <div id="teacherLookupResult" class="space-y-2 max-h-64 overflow-y-auto pt-2">
-            <p class="text-xs font-bold text-bhInk/60 text-center py-6 border-2 border-dashed border-bhInk/30">
-              Select a class or English group to view roster score tallies.
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-    </section>
-
-  </main>
-
-  <!-- FOOTER BLOCK -->
-  <footer class="mt-auto border-t-8 border-bhInk bg-white py-6 text-center text-xs font-bold text-bhInk">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <div class="flex items-center space-x-2">
-        <span class="w-3 h-3 bg-bhRed border border-bhInk inline-block"></span>
-        <span class="w-3 h-3 bg-bhBlue border border-bhInk inline-block"></span>
-        <span class="w-3 h-3 bg-bhYellow border border-bhInk inline-block"></span>
-        <span class="uppercase font-black">English Speaking Day Platform</span>
-      </div>
-      <p class="font-mono text-[11px]">Powered by Google Apps Script &bull; Bauhaus System Architecture</p>
     </div>
-  </footer>
+  </div>
 
-  <!-- SCRIPT LOGIC & GAS INTEGRATION -->
-  <script>
-    // System State Variables & GAS API Endpoint Configuration
-    const GAS_API_URL = "https://script.google.com/a/macros/lstyoungkhl.edu.hk/s/AKfycbw8aryp3-LxbJmqSjqRod2yPHyZBCkL1UKfsq_I2ctJcnOXlOYjpYK8IzJAcpd645mi/exec";
+  <!-- TEACHER ACTION PLANE -->
+  <div class="plane-action" id="teacherPanel" style="display:none;">
+    <h2 style="background:var(--dp-color-ground); color:var(--dp-color-ink);">Teacher Terminal</h2>
+    
+    <div id="reader"></div>
+    <button class="action-circle" id="scanBtn" onclick="toggleScanner()">Scan ID</button>
+    
+    <div>
+      <input type="text" id="manualId" class="input-rect" placeholder="Manual ID Entry" onkeypress="if(event.key==='Enter') submitManual()">
+    </div>
 
-    let currentUserEmail = localStorage.getItem('teacher_email') || "";
-    let isTeacher = false;
+    <div id="statusBox" class="status-panel"></div>
 
-    let isCameraScanning = false;
-    let lastScannedCode = "";
-    let lastScanTime = 0;
-    let filterOptions = { classes: [], groups: [] };
-    let liveRefreshTimer = null;
-    let isLiveRefreshOn = false;
+    <div style="background:var(--dp-color-ground); padding:16px; border:4px solid var(--dp-color-ink); margin-top:24px;">
+      <h3>Lookup Roster</h3>
+      <div class="controls-row" style="margin-top:8px;">
+        <select id="lookupType">
+          <option value="class">Class</option>
+          <option value="group">Eng Group</option>
+        </select>
+        <select id="lookupValue"></select>
+        <button class="btn-square" onclick="lookupScores()">Search</button>
+      </div>
+      <div id="lookupResults" style="max-height:200px; overflow-y:auto; border:2px solid black; padding:8px; display:none;"></div>
+    </div>
+  </div>
+</div>
 
-    // Helper for cross-origin JSONP API calls to GAS
-    function fetchGASJsonp(actionParams, callback) {
-      const callbackName = 'gas_cb_' + Math.round(100000 * Math.random());
-      window[callbackName] = function(data) {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        callback(null, data);
-      };
+<script>
+  let html5QrcodeScanner = null;
+  const beepSuccess = new Audio('https://actions.google.com/sounds/v1/ui/probes_tone.ogg');
+  const beepError = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
 
-      const script = document.createElement('script');
-      const delimiter = actionParams.includes('?') ? '&' : '?';
-      script.src = `${GAS_API_URL}${actionParams}${delimiter}callback=${callbackName}`;
-      script.onerror = function(err) {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        callback(err);
-      };
-      document.body.appendChild(script);
+  // Initialize Data
+  window.onload = () => {
+    google.script.run.withSuccessHandler(initApp).getInitialData();
+    setInterval(() => {
+      if (document.getElementById('liveRefresh').checked) refreshLeaderboard();
+    }, 15000);
+  };
+
+  function initApp(data) {
+    if (data.isTeacher) {
+      document.getElementById('teacherPanel').style.display = 'flex';
+      google.script.run.withSuccessHandler(populateOptions).getClassAndGroupOptions();
     }
+    renderLeaderboards(data.leaderboard);
+  }
 
-    // Web Audio Sound Generators
-    const playAudioSuccess = () => {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.3);
-      } catch (e) { console.log('Audio error:', e); }
-    };
+  // Scanner Logic
+  function toggleScanner() {
+    if (html5QrcodeScanner) {
+      html5QrcodeScanner.clear();
+      html5QrcodeScanner = null;
+      document.getElementById('scanBtn').innerText = "SCAN ID";
+    } else {
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } },
+        (decodedText) => { processScore(decodedText); },
+        (error) => { /* ignore frame errors */ }
+      );
+      document.getElementById('scanBtn').innerText = "STOP";
+    }
+  }
 
-    const playAudioWarning = () => {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(300, ctx.currentTime);
-        osc.frequency.setValueAtTime(200, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.25);
-      } catch (e) { console.log('Audio error:', e); }
-    };
+  function submitManual() {
+    const val = document.getElementById('manualId').value;
+    if (val) processScore(val);
+    document.getElementById('manualId').value = "";
+    document.getElementById('manualId').blur();
+  }
 
-    // On Load Initialization using Fetch with redirect: "follow"
-    // On Load Initialization using Fetch with JSONP fallback
-    window.onload = () => {
-      loadInitialData();
-
-      fetchGASJsonp('?action=getFilterOptions', (err, options) => {
-        if (!err && options) handleOptionsLoaded(options);
-      });
-    };
-
-    function loadInitialData() {
-      const emailQuery = currentUserEmail ? `&userEmail=${encodeURIComponent(currentUserEmail)}` : '';
-      fetchGASJsonp(`?action=getInitialData${emailQuery}`, (err, data) => {
-        if (err || !data) {
-          console.error("API Connection Error:", err);
-          document.getElementById('userEmailSpan').innerText = "Connection Failed";
-          return;
+  let isProcessing = false;
+  function processScore(studentId) {
+    if (isProcessing) return;
+    isProcessing = true;
+    showStatus('Processing...', 'status-warn');
+    
+    google.script.run
+      .withSuccessHandler(res => {
+        isProcessing = false;
+        if (res.success) {
+          beepSuccess.play();
+          showStatus(`+1 Point!<br>${res.student.name} (${res.student.className})<br>Total: ${res.student.totalScore}`, 'status-success');
+        } else if (res.cooldown) {
+          beepError.play();
+          showStatus(res.message, 'status-warn');
+        } else {
+          beepError.play();
+          showStatus(res.message, 'status-error');
         }
-        handleInitSuccess(data);
-      });
+      })
+      .withFailureHandler(err => {
+        isProcessing = false;
+        beepError.play();
+        showStatus('Network Error.', 'status-error');
+      })
+      .recordPoint(studentId);
+  }
+
+  function showStatus(html, className) {
+    const box = document.getElementById('statusBox');
+    box.className = `status-panel ${className}`;
+    box.innerHTML = html;
+    box.style.display = 'block';
+    setTimeout(() => { box.style.display = 'none'; }, 4000);
+  }
+
+  // Leaderboard Logic
+  function applyPreset() {
+    const val = document.getElementById('presetRange').value;
+    const today = new Date().toISOString().split('T')[0];
+    if (val === 'today') {
+      document.getElementById('startDate').value = today;
+      document.getElementById('endDate').value = today;
+    } else {
+      document.getElementById('startDate').value = "";
+      document.getElementById('endDate').value = "";
     }
+    refreshLeaderboard();
+  }
 
-    function promptChangeEmail() {
-      const input = prompt("Enter your School Google Email (to verify Teacher status against Google Sheet):", currentUserEmail);
-      if (input !== null) {
-        currentUserEmail = input.trim();
-        localStorage.setItem('teacher_email', currentUserEmail);
-        loadInitialData();
-      }
-    }
+  function refreshLeaderboard() {
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    google.script.run.withSuccessHandler(renderLeaderboards).calculateLeaderboard(start, end);
+  }
 
-    function handleInitSuccess(data) {
-      isTeacher = data.isTeacher;
+  function renderLeaderboards(data) {
+    document.getElementById('studentList').innerHTML = data.students.map((s, i) => `
+      <div class="stat-row ${i===0?'podium-1':(i<3?'podium-2':'')}">
+        <span>#${i+1} ${s.name} (${s.className})</span><span>${s.score} pt</span>
+      </div>`).join('') || 'No records';
 
-      const userSpan = document.getElementById('userEmailSpan');
-      const unauthSpan = document.getElementById('unauthEmail');
+    const maxHouse = Math.max(...data.houses.map(h => h.score), 1);
+    document.getElementById('houseList').innerHTML = data.houses.map((h, i) => `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; font-weight:700;">
+          <span>#${i+1} ${h.name}</span><span>${h.score} pt</span>
+        </div>
+        <div class="house-bar-container">
+          <div class="house-bar bg-${h.name}" style="width:${(h.score/maxHouse)*100}%;"></div>
+        </div>
+      </div>`).join('');
 
-      if (currentUserEmail) {
-        userSpan.innerText = currentUserEmail;
-        unauthSpan.innerText = currentUserEmail;
-      } else {
-        userSpan.innerText = "Public Visitor";
-        unauthSpan.innerText = "Public Visitor (Not Logged In)";
-      }
+    document.getElementById('groupList').innerHTML = data.groups.map(g => `<div class="stat-row"><span>${g.name}</span><span>${g.score}</span></div>`).join('');
+    document.getElementById('classList').innerHTML = data.classes.map(c => `<div class="stat-row"><span>${c.name}</span><span>${c.score}</span></div>`).join('');
+  }
 
-      const dot = document.getElementById('userEmailStatusDot');
-      if (isTeacher) {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 border border-bhInk";
-        document.getElementById('teacherBadge').classList.remove('hidden');
-        document.getElementById('unauthorizedBox').classList.add('hidden');
-        document.getElementById('authorizedBox').classList.remove('hidden');
-      } else {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-bhRed border border-bhInk";
-        document.getElementById('teacherBadge').classList.add('hidden');
-        document.getElementById('unauthorizedBox').classList.remove('hidden');
-        document.getElementById('authorizedBox').classList.add('hidden');
-      }
+  // Teacher Lookup
+  function populateOptions(opts) {
+    window.dropdownOpts = opts;
+    updateLookupDropdown();
+    document.getElementById('lookupType').addEventListener('change', updateLookupDropdown);
+  }
+  
+  function updateLookupDropdown() {
+    const type = document.getElementById('lookupType').value;
+    const arr = type === 'class' ? window.dropdownOpts.classes : window.dropdownOpts.groups;
+    document.getElementById('lookupValue').innerHTML = arr.map(a => `<option value="${a}">${a}</option>`).join('');
+  }
 
-      renderLeaderboard(data.leaderboard);
-    }
+  function lookupScores() {
+    const type = document.getElementById('lookupType').value;
+    const val = document.getElementById('lookupValue').value;
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    
+    document.getElementById('lookupResults').innerHTML = 'Loading...';
+    document.getElementById('lookupResults').style.display = 'block';
 
-    function switchTab(tabName) {
-      const dashSec = document.getElementById('dashboardSection');
-      const scanSec = document.getElementById('scannerSection');
-      const dashBtn = document.getElementById('navDashboardBtn');
-      const scanBtn = document.getElementById('navScannerBtn');
-
-      if (tabName === 'dashboard') {
-        dashSec.classList.remove('hidden');
-        scanSec.classList.add('hidden');
-        dashBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm";
-        scanBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition";
-        if (isCameraScanning) stopCamera();
-      } else {
-        dashSec.classList.add('hidden');
-        scanSec.classList.remove('hidden');
-        scanBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhYellow text-bhInk shadow-hard-sm";
-        dashBtn.className = "px-4 py-2 font-black text-xs uppercase tracking-wider bg-bhGround text-bhInk hover:bg-white transition";
-
-        // Prompt for email if no email is set yet
-        if (!currentUserEmail && !isTeacher) {
-          promptChangeEmail();
-        }
-      }
-    }
-
-    function handleInitSuccess(data) {
-      if (data.userEmail && data.userEmail !== "Guest") {
-        currentUserEmail = data.userEmail;
-      }
-      
-      isTeacher = data.isTeacher;
-
-      document.getElementById('userEmailSpan').innerText = currentUserEmail || "Guest User";
-      document.getElementById('unauthEmail').innerText = currentUserEmail || "Guest User";
-
-      const dot = document.getElementById('userEmailStatusDot');
-      if (isTeacher) {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 border border-bhInk";
-        document.getElementById('teacherBadge').classList.remove('hidden');
-        document.getElementById('unauthorizedBox').classList.add('hidden');
-        document.getElementById('authorizedBox').classList.remove('hidden');
-      } else {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-bhRed border border-bhInk";
-        document.getElementById('teacherBadge').classList.add('hidden');
-        document.getElementById('unauthorizedBox').classList.remove('hidden');
-        document.getElementById('authorizedBox').classList.add('hidden');
-      }
-
-      renderLeaderboard(data.leaderboard);
-    }
-
-    function handleOptionsLoaded(options) {
-      filterOptions = options;
-      onTeacherFilterTypeChange();
-    }
-
-    function onTeacherFilterTypeChange() {
-      const type = document.getElementById('tFilterType').value;
-      const select = document.getElementById('tFilterValue');
-      select.innerHTML = '';
-
-      const list = type === 'class' ? filterOptions.classes : filterOptions.groups;
-      if (!list || list.length === 0) {
-        select.innerHTML = `<option value="">No options available</option>`;
-        return;
-      }
-
-      list.forEach(item => {
-        select.innerHTML += `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`;
-      });
-    }
-
-    function fetchTeacherStudentScores() {
-      const type = document.getElementById('tFilterType').value;
-      const val = document.getElementById('tFilterValue').value;
-      const sDate = document.getElementById('tStartDate').value;
-      const eDate = document.getElementById('tEndDate').value;
-      const resultBox = document.getElementById('teacherLookupResult');
-
-      if (!val) {
-        resultBox.innerHTML = `<p class="text-xs font-bold text-bhRed text-center py-3 border-2 border-bhRed bg-bhRed/10">Please select a filter category first.</p>`;
-        return;
-      }
-
-      resultBox.innerHTML = `<p class="text-xs font-bold text-bhInk text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading roster scores...</p>`;
-
-      fetchGASJsonp(`?action=getStudentScores&filterType=${type}&filterValue=${encodeURIComponent(val)}&startDate=${sDate}&endDate=${eDate}&userEmail=${encodeURIComponent(currentUserEmail)}`, (err, data) => {
-        if (err || !data) {
-          resultBox.innerHTML = `<p class="text-xs font-bold text-bhRed text-center py-3 border-2 border-bhRed">Network error loading roster.</p>`;
-          return;
-        }
-        renderTeacherStudentLookup(data);
-      });
-    }
-
-// ... existing code flash ...
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('lookupResults').innerHTML = res.map(r => `
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #000; padding:4px 0;">
+          <span>${r.classNo}. ${r.name}</span><strong>${r.score}</strong>
+        </div>
+      `).join('');
+    }).getStudentScoresByFilter(type, val, start, end);
+  }
+</script>
+</body>
+</html>
